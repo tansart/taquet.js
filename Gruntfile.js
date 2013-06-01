@@ -49,5 +49,6 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['connect', 'jasmine']);
 
   grunt.registerTask('compile', ['requirejs']);
+  grunt.registerTask('test', ['connect', 'jasmine']);
 
 };

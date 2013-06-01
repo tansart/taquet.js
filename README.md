@@ -1,6 +1,6 @@
 # taquet
 
-taquet extends Backbone.js with the following features:
+taquet extends Backbone.js and adds the following features:
 
 - A platform wide commands system
 - bubbling events
@@ -31,3 +31,6 @@ Refer to [taquet-generator](https://github.com/stilva/taquet-generator) and  [ye
 
 ## Testing
 Refer to [taquet-generator](https://github.com/stilva/taquet-generator), [yeoman](http://yeoman.io/), and [grunt](http://www.gruntjs.com) for more details.
+
+1. If the Views are created using taquet-generator a *Spec.js file will automatically be created in `path/to/test`
+2. Running `grunt test` will run the tests and test for the native features.
