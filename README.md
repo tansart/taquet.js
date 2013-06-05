@@ -78,21 +78,28 @@ new CustomView({commands:[SHUT_DOWN]});
 ```
 
 ####Bubbling Events
-~~Bubbling events are slightly less straight-forward than commands, and there are a few things to keep in mind:~~
+There are few rules to follow for bubbling events to work properly:
 
-When using `on()` or `once()` you need to let taquet know that we're dealing with a bubbling event. The callback will need to
-have the following string: `bubbleEvent` _not case sensitive!_
-
-```js
-function onBubblingEventHandler(e) {
-  "BubbleEvent";
-}
-```
-
-When using the `trigger()` function to dispatch an event up the hierarchy you need to pass in an instance of `BubbleEvent`.
+1. `trigger()` needs to be used alongside a `BubbleEvent` instance.
 
 ```js
 this.trigger(new BubbleEvent("CUSTOM_EVENT"));
+```
+2. When modifying the DOM that is associated to a given Backbone view, always use `setElement`: this allows both Backbone,
+and taquet to do some clean-ups.
+3. callbacks triggered with `BubbleEvent` will receive three arguments as follow:
+
+```js
+function onBubbleEventHandler(type, event, arg0, arg1, ..., argN) {
+}
+```
+
+where `type` is the event type, `event` is the BubbleEvent object, and the rest are arguments passed through from `trigger()`.
+
+####BubbleEvent
+
+```js
+var event = new BubbleEvent("CUSTOM_EVENT");
 ```
 
 ###AnimatedView
