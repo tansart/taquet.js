@@ -35,36 +35,26 @@ _Refer to [taquet-generator](https://github.com/stilva/taquet-generator) and  [y
 I recommend the use of the aforementioned yeoman generator, as it will create and extend the Views for you.
 
 ###BaseView
-This is the most basic view that taquet has. For Commands, and bubbling Events extend from this view instead of `Backbone.View`. _Note that Commands are synchronous while Events are asynchronous_
+This is the most basic view that taquet has. For Commands, and bubbling Events to work extend from this view instead of `Backbone.View`. _Note that Commands are synchronous while Events are asynchronous_
 
-With vanilla Backbone.js you extend the views as follow:
-```js
-var CustomView = Backbone.View.extend({
-  // add your methods here
-});
-```
-while using taquet, you extend BaseView instead:
-```js
-var CustomView = BaseView.extend({
-  // add your methods here
-});
-```
+Instead of `Backbone.View.extend({(...)});`, use `BaseView.extend({(...)});`.
 
 ####Commands
 There are two ways to register commands:
 
-1. Passing the commands via the contstructor
-2. Specifying the commands when extending BaseView.
+1. Specifying the commands when extending BaseView.
+2. Passing the commands via the contstructor.
 
 ```js
 var CustomView = BaseView.extend({
-  commands: [START_UP, SLEEP],
+  //START_UP etc are strings.
+  commands: [Commands.START_UP, Commands.SLEEP],
   commandHandler: function(command) {
     switch(command) {
-      case START_UP:
+      case Commands.START_UP:
         //do something at startup
         break;
-      case SLEEP:
+      case Commands.SLEEP:
         // do something else
         break;
        default:
@@ -74,8 +64,10 @@ var CustomView = BaseView.extend({
   }
 });
 
-new CustomView({commands:[SHUT_DOWN]});
+new CustomView({commands:[Commands.SHUT_DOWN]});
 ```
+
+`this.sendCommand(command, args)` can be invoked from any class that extends `BaseEvent`.
 
 ####Bubbling Events
 There are few rules to follow for bubbling events to work properly:
@@ -90,7 +82,7 @@ and taquet to do some clean-ups.
 3. callbacks triggered with `BubbleEvent` will receive three arguments as follow:
 
 ```js
-function onBubbleEventHandler(type, event, arg0, arg1, ..., argN) {
+function onBubbleEventHandler(event, arg0, arg1, ... ) {
 }
 ```
 
@@ -102,6 +94,13 @@ where `type` is the event type, `event` is the BubbleEvent object, and the rest 
 var event = new BubbleEvent("CUSTOM_EVENT");
 ```
 
+By calling `event.stopPropagation()` an event can be stopped from bubbling up the even hierarchy.
+
+An event could also be uncancellable by setting the cancellable flag to false.
+
+```js
+var event = new BubbleEvent("CUSTOM_EVENT", false);
+```
 ###AnimatedView
 
 ###BaseApplication
@@ -112,6 +111,12 @@ It does not do much, but is needed if you use AnimatedView.
 
 ###Utilities
 ####Proxy
+
+Helper method that allows you to specify the scope within which a callback will run.
+
+```js
+this.proxy(fn, context, args)
+```
 
 ####Webfont preloader
 
