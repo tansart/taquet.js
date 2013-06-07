@@ -8,6 +8,23 @@ taquet extends Backbone.js and adds the following features:
 - synchronous events for animations
 - Helpul utilities
 
+#Table of Contents
+- [Dependencies](#dependencies)
+	- [Development prerequisits](#development-prerequisits)
+- [Installing taquet](#installing-taquet)
+- [Usage](#usage)
+	- [BaseView](#baseview)
+		- [Commands](#commands)
+		- [Bubbling Events](#bubbling-events)
+		- [BubbleEvent](#bubbleevent)
+	- [AnimatedView](#animatedview)
+	- [BaseApplication](#baseapplication)
+	- [BaseRouter](#baserouter)
+	- [Utilities](#utilities)
+		- [Proxy](#proxy)
+		- [Webfont preloader](#webfont-preloader)
+- [Testing](#testing)
+
 ## Dependencies
 
 * backbone.js [which in turn requires underscore/lodash, and jQuery/Zepto]
