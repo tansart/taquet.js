@@ -1,12 +1,12 @@
 define([
 
-  'com/stilva/taquet/util/Core',
+  'com/stilva/taquet/util/TaquetCore',
 
   'com/stilva/taquet/event/BaseEvent',
 
   'underscore'
 
-], function(Core, BaseEvent, _) {
+], function(TaquetCore, BaseEvent, _) {
 
   var Queue = function _queue(options) {
     var self = this;
@@ -20,7 +20,7 @@ define([
       self[key] = item;
     });
 
-    this.proxy = Core.proxy;
+    this.proxy = TaquetCore.proxy;
   };
 
   Queue.length = 0;
@@ -29,12 +29,12 @@ define([
     var i = 0,
         l = 0,
         methods = ['push', 'pop', 'shift', 'unshift', 'slice', 'splice', 'join'];
-
     for(l=methods.length;i<l;i++) {
+      /* jshint loopfunc : true */
       (function(method){
         Queue.prototype[method] = function() {
           return [][method].apply(this, arguments);
-        }
+        };
       }(methods[i]));
     }
 

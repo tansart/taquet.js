@@ -1,10 +1,10 @@
 define([
 
-  'com/stilva/taquet/util/Core',
+  'com/stilva/taquet/util/TaquetCore',
 
   'underscore'
 
-], function(Core, _) {
+], function(TaquetCore, _) {
   "use strict";
 
   /* jshint unused: false */

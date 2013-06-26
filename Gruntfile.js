@@ -37,6 +37,12 @@ module.exports = function(grunt) {
           out: "./js/main-built.js"
         }
       }
+    },
+
+    benchmark: {
+      all: {
+        src: ['benchmarks/*.js'],
+      }
     }
 
   });
@@ -44,11 +50,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-benchmark');
 
   // Default task(s).
   grunt.registerTask('default', ['connect', 'jasmine']);
 
   grunt.registerTask('compile', ['requirejs']);
   grunt.registerTask('test', ['connect', 'jasmine']);
+  grunt.registerTask('bench', ['benchmark']);
 
 };

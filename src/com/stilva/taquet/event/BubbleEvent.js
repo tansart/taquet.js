@@ -1,27 +1,32 @@
-define([
-],
-  function () {
-    "use strict";
+(function(parent, factory) {
+  "use strict";
+  if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return factory();
+    });
+  } else {
+    // Browser globals
+    parent.BubbleEvent = factory();
+  }
+}(this, function() {
+  "use strict";
 
-    var BubbleEvent = function (type, bubbles, cancelable) {
+  var BubbleEvent = function (type, cancellable) {
 
-      this.type             = type;
+    this.type             = type;
 
-      this.timestamp        = new Date().valueOf();
+    this.timestamp        = new Date().valueOf();
 
-      this.bubbles          = bubbles;
-      this.cancelable       = cancelable;
+    this.cancellable       = cancellable;
 
-      this._stopPropagation = false;
+    this._stopPropagation = false;
 
-      this.stopPropagation  = function () {
-        this._stopPropagation = true;
-      };
-
-      this.originalEvent   = null;
-
+    this.stopPropagation  = function () {
+      this._stopPropagation = true;
     };
 
-    return BubbleEvent;
-  }
-);
+  };
+
+  return BubbleEvent;
+
+}));

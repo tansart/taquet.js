@@ -1,4 +1,14 @@
-define(function () {
+(function(parent, factory) {
+  "use strict";
+  if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return factory();
+    });
+  } else {
+    // Browser globals
+    parent.CommandManager = factory();
+  }
+}(this, function() {
   "use strict";
   /**
    * A Multiton that, as the name suggest manages commands
@@ -23,30 +33,40 @@ define(function () {
       return commands[type];
     }
 
-    this.addCommand = function (type, callback, context) {
-      has(type).push({caller: this, callback: callback, currentTarget: context});
+    this.addCommand = function (type, callback) {
+      has(type).push({currentTarget:this, callback: callback});
     };
 
     this.remove = function (type) {
-      var iterator;
-      if (commands && typeof commands[type] === "object") {
-        for (iterator in commands[type]) {
-          if (commands[type].hasOwnProperty(iterator)) {
-            console.log(iterator);
+      if(this instanceof CommandManager) {
+        console.warn(type, 'scope issue. Make sure to call exec with the right scope');
+      } else if (commands && typeof commands[type] === "object") {
+        for (var i = 0, l = commands[type].length; i<l; i++) {
+          if(this === commands[type][i].currentTarget) {
+            commands[type].splice(i, 1);
+            break;
           }
         }
       }
     };
 
+    //TODO Should the scope checking be offloaded elsewhere?
     this.exec = function (type) {
       if (!commands[type]) {
         console.warn(type, 'Nothing to trigger');
+      } else if(this instanceof CommandManager) {
+        console.warn(type, 'scope issue. Make sure to call exec with the right scope');
       } else {
-        var event, iterator;
-        for (iterator in commands[type]) {
-          if (commands[type].hasOwnProperty(iterator)) {
-            event = {type: type, target: this, currentTarget: commands[type][iterator].currentTarget};
-            commands[type][iterator].callback.apply(this, [event].concat([].slice.call(arguments, 1)));
+        var i = 0,
+            l = commands[type].length,
+            cInstanceOf = this instanceof CommandManager,
+            command;
+
+        for (; i<l; i++) {
+          command = commands[type][i];
+
+          if(cInstanceOf || (!cInstanceOf && this !== command.currentTarget)) {
+            command.callback.apply(this, [{type:type, currentTarget:command.currentTarget}].concat([].slice.call(arguments, 1)));
           }
         }
       }
@@ -61,4 +81,4 @@ define(function () {
 
   return CommandManager;
 
-});
+}));
