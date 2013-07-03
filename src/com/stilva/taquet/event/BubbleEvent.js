@@ -1,17 +1,20 @@
-(function(parent, factory) {
+/* globals define */
+(function(factory) {
   "use strict";
+
   if (typeof define === 'function' && define.amd) {
     define(function() {
       return factory();
     });
   } else {
     // Browser globals
-    parent.BubbleEvent = factory();
+    this.BubbleEvent = factory();
   }
-}(this, function() {
+}.call(this, function() {
   "use strict";
+  var BubbleEvent;
 
-  var BubbleEvent = function (type, cancellable) {
+  BubbleEvent = function (type, cancellable) {
 
     this.type             = type;
 

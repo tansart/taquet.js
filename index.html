@@ -1,5 +1,26 @@
 <html>
+  <head>
+    <script src="src/vendor/jquery.js"></script>
+    <script src="src/vendor/lodash.js"></script>
+    <script src="src/vendor/backbone.js"></script>
+    <script src="src/com/stilva/taquet/event/BubbleEvent.js"></script>
+    <script src="./taquet.js"></script>
+    <script>
+      $(function() {
+        var View = Backbone.View;
+        new View({el: $("#one")}).on("e", function() {console.log("one");});
+        new View({el: $("#two")}).on("e", function() {console.log("two");});
+        new View({el: $("#two")}).on("e", function() {console.log("four");});
+        var three = new View({el: $("#three")});
+        three.trigger(new BubbleEvent("e"));
+      });
+    </script>
+  </head>
   <body>
-    <script data-main="src/main" src="src/vendor/require.js"></script>
+    <div id="one">
+      <div id="two">
+        <div id="three"></div>
+      </div>
+    </div>
   </body>
 </html>

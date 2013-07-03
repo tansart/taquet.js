@@ -1,80 +1,67 @@
-(function(parent, factory) {
-  "use strict";
-  if (typeof define === 'function' && define.amd) {
-    define([
-      'com/stilva/taquet/util/TaquetCore',
-      'com/stilva/taquet/event/BaseEvent',
-      'underscore'
-    ], function(TaquetCore, BaseEvent, _) {
-      return factory(TaquetCore, BaseEvent, _);
-    });
-  } else {
-    // Browser globals
-    parent.CommandQueue = factory(parent.TaquetCore, parent.BaseEvent, parent._);
-  }
-}(this, function(TaquetCore, BaseEvent, _) {
-  "use strict";
+/* globals TaquetCore, BaseEvent, _ */
+/* jshint strict: false */
 
-  var Queue = function _queue(options) {
-    var self = this;
+var CommandQueue;
 
-    BaseEvent.apply(this);
-
-    this.QUEUE_UPDATED  = 'QUEUE_UPDATED_EVENT';
-
-    // Let's not iterate through an object with `this.proxy`
-    _.each(options, function(item, key){
-      self[key] = item;
-    });
-
-    this.proxy = TaquetCore.proxy;
+function _extend(method) {
+  CommandQueue.prototype[method] = function() {
+    return [][method].apply(this, arguments);
   };
+}
 
-  Queue.length = 0;
+CommandQueue = function _commandQueue(options) {
+  var self = this;
 
-  (function(){
-    var i = 0,
-        l = 0,
-        methods = ['push', 'pop', 'shift', 'unshift', 'slice', 'splice', 'join'];
+  BaseEvent.apply(this);
 
-    for(l=methods.length;i<l;i++) {
-      _extend.call(this, methods[i]);
-    }
+  this.QUEUE_UPDATED  = 'QUEUE_UPDATED_EVENT';
 
-  }());
-
-  _.extend(Queue.prototype, {
-    push: function() {
-      return [].push.apply(this, arguments);
-    },
-
-    set: function(array) {
-      var item;
-      this.clear();
-
-      while(item = array.shift()) {
-        this.push(item);
-      }
-
-      this.sendCommand(this.QUEUE_UPDATED);
-    },
-
-    clear: function() {
-      do {
-        this.pop();
-      } while(this.length>0);
-    },
-
-    isEmpty: function() {
-      return this.length === 0;
-    }
+  // Let's not iterate through an object with `this.proxy`
+  _.each(options, function(item, key){
+    self[key] = item;
   });
+//
+  this.proxy = TaquetCore.proxy;
+};
 
-  function _extend(method) {
-    Queue.prototype[method] = function() {
-      return [][method].apply(this, arguments);
-    };
+if(!CommandQueue.hasOwnProperty("length")) {
+  CommandQueue.length = 0;
+}
+
+(function(){
+  var i = 0,
+      l = 0,
+      methods = ['push', 'pop', 'shift', 'unshift', 'slice', 'splice', 'join'];
+
+  for(l=methods.length;i<l;i++) {
+    _extend.call(this, methods[i]);
   }
 
-  return Queue;
-}));
+}());
+
+_.extend(CommandQueue.prototype, {
+  push: function() {
+    return [].push.apply(this, arguments);
+  },
+
+  set: function(array) {
+    var item;
+    this.clear();
+
+    while(item = array.shift()) {
+      this.push(item);
+    }
+
+    this.sendCommand(this.QUEUE_UPDATED);
+  },
+
+  clear: function() {
+    do {
+      this.pop();
+    } while(this.length>0);
+  },
+
+  isEmpty: function() {
+    return this.length === 0;
+  }
+});

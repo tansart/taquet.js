@@ -1,5 +1,20 @@
 module.exports = function(grunt) {
   "use strict";
+  var fs = require('fs'),
+    mOutput = 'taquet.js',
+    mFiles = [
+      'src/com/stilva/util/Queue.js',
+      'src/com/stilva/taquet/util/TaquetCore.js',
+      'src/com/stilva/taquet/event/BubbleEventManager.js',
+      'src/com/stilva/taquet/event/CommandManager.js',
+      'src/com/stilva/taquet/event/CommandQueue.js',
+      'src/com/stilva/taquet/event/BaseEvent.js',
+      'src/com/stilva/taquet/application/BaseApplication.js',
+      'src/com/stilva/taquet/view/BaseView.js',
+      'src/com/stilva/taquet/view/BaseAnimatedView.js',
+      'src/com/stilva/taquet/model/BaseModel.js',
+      'src/com/stilva/taquet/router/BaseRouter.js'
+    ];
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -10,38 +25,70 @@ module.exports = function(grunt) {
       }
     },
 
+    concat: {
+      options: {
+        banner: (fs.readFileSync('./src/out/banner.tmpl').toString()),
+        footer: (fs.readFileSync('./src/out/footer.tmpl').toString()),
+        separator: '\r',
+        process: function(src, filepath) {
+//          return '// Source: ' + filepath + '\n' +
+          return src.replace(/^.|\r./mg, function(match) {
+              return "  "+match;
+            });
+        }
+      },
+      dist: {
+        src: mFiles,
+        dest: mOutput
+      }
+    },
+
+    jshint: {
+      options: {
+        jshintrc: ".jshintrc"
+      },
+//      src: mFiles
+      beforeconcat: mFiles,
+      afterconcat: mOutput
+    },
+
     jasmine: {
       taquet: {
-        src: ['src/**/*.js', '!src/vendor/require.js', '!src/vendor/r.js'],
+        src: [
+          './src/vendor/lodash.js',
+          './src/vendor/jquery.js',
+          './src/vendor/backbone.js',
+          './src/com/stilva/taquet/event/BubbleEvent.js',
+          './taquet.js'
+        ],
         options: {
-          specs: 'test/**/*Spec.js',
-          helpers: 'test/**/*Helper.js',
+          keepRunner: true,
+          specs: 'test/com/stilva/taquet/*Spec.js',
           host: 'http://127.0.0.1:<%= connect.test.port %>/',
-          template: require('grunt-template-jasmine-requirejs'),
-          templateOptions: {
-            requireConfigFile: './src/main.js',
-            requireConfig: {
-              baseUrl: './src/'
-            }
-          }
         }
       }
     },
 
-    requirejs: {
-      compile: {
+    qunit: {
+      all: {
         options: {
-          baseUrl: "./src/",
-          name: "main",
-          mainConfigFile: "./src/main.js",
-          out: "./js/main-built.js"
+          urls: [
+            'http://localhost:8000/test/com/backbone/index.html'
+          ]
         }
       }
     },
 
     benchmark: {
       all: {
-        src: ['benchmarks/*.js'],
+        src: ['benchmarks/*.js']
+      }
+    },
+
+    watch: {
+      scripts: {
+        files: ['src/**/*.js', 'src/out/*.tmpl', 'src/**/*Spec.js'],
+        tasks: ['test']
       }
     }
 
@@ -49,14 +96,19 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
-  grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-benchmark');
 
   // Default task(s).
-  grunt.registerTask('default', ['connect', 'jasmine']);
+  grunt.registerTask('default', ['watch']);
+//  grunt.registerTask('default', ['concat', 'jshint']);
 
-  grunt.registerTask('compile', ['requirejs']);
-  grunt.registerTask('test', ['connect', 'jasmine']);
+  grunt.registerTask('compile', ['concat', 'jshint']);
+  grunt.registerTask('test', ['concat', 'jshint', 'connect', 'qunit', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
 
 };

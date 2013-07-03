@@ -1,8 +1,8 @@
+/* globals jasmine, Backbone */
 describe("CommandsSpec :: ", function() {
   "use strict";
 
-  var BaseView = require("com/stilva/taquet/view/BaseView"),
-      OuterView, InnerView, InnerInnerView, MenuView,
+  var OuterView, InnerView, InnerInnerView, MenuView,
 
       outerCommandHandler = jasmine.createSpy("outerCommandHandler"),
       innerCommandHandler = jasmine.createSpy("innerCommandHandler"),
@@ -14,7 +14,7 @@ describe("CommandsSpec :: ", function() {
       SHUT_DOWN = "SHUT_DOWN",
       RESET = "RESET";
 
-  OuterView = BaseView.extend({
+  OuterView = Backbone.View.extend({
     commands: [START_UP],
     initialize: function() {
       console.log("outerview initialised");
@@ -40,7 +40,7 @@ describe("CommandsSpec :: ", function() {
     commandHandler: innerInnerCommandHandler
   });
 
-  MenuView = BaseView.extend({
+  MenuView = Backbone.View.extend({
     commands: [START_UP, SHUT_DOWN],
     initialize: function() {
       // nothing

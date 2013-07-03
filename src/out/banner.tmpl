@@ -1,0 +1,14 @@
+/* globals define */
+(function(factory) {
+  "use strict";
+
+  if (typeof define === 'function' && define.amd) {
+    define(['_', '$', 'Backbone', 'BubbleEvent'], function(_, $, Backbone, BubbleEvent) {
+      return factory.call(this, _, $, Backbone, BubbleEvent);
+    });
+  } else {
+    // Browser globals
+    this.Taquet = factory.call(this, this._, this.$, this.Backbone, this.BubbleEvent);
+  }
+}.call(this, function(_, $, Backbone, BubbleEvent) {
+  "use strict";

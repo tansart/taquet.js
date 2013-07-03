@@ -1,181 +1,174 @@
-(function(parent, factory) {
-  "use strict";
-  if (typeof define === 'function' && define.amd) {
-    define([
-      'backbone',
-      'underscore',
-      'jquery',
-      'com/stilva/taquet/util/TaquetCore',
-      'com/stilva/taquet/event/BaseEvent',
-      'com/stilva/taquet/event/BubbleEvent',
-      'com/stilva/taquet/event/BubbleEventManager'
-    ], function(Backbone, _, $, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager) {
-      return factory(Backbone, _, $, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager);
-    });
-  } else {
-    // Browser globals
-    parent.BasView = factory(parent.Backbone, parent._, parent.$, parent.TaquetCore, parent.BaseEvent, parent.BubbleEvent, parent.BubbleEventManager);
+/* jshint strict: false */
+/* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager */
+var _backboneView = Backbone.View,
+  _bubbleEventsManager = new BubbleEventManager();
+
+/**
+ * adds the data-cid attribute to this.el || element
+ * @param element (optional) new DOM element
+ * @private
+ */
+function _addCid() {
+  /*jshint validthis:true */
+  var cid;
+
+  if(this.el) {
+    cid = this.el.getAttribute("data-cid");
+    if(cid) {
+      if(cid.indexOf(this.cid) === -1) {
+        cid += ", "+this.cid;
+      } else {
+        return;
+      }
+    } else {
+      cid = this.cid;
+    }
+
+    this.el.setAttribute("data-cid", cid);
   }
-}(this, function (Backbone, _, $, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager) {
-  "use strict";
+}
 
-  var BaseView,
-    _bubbleEventsManager = new BubbleEventManager();
+function _removeCid() {
+  /*jshint validthis:true */
+  var matched,
+      cid = this.el.getAttribute("data-cid");
 
-  BaseView = function (options) {
+  cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'), function(match) {
 
-    this.ID             = "BaseView";
+    matched = match.match(/,/g);
 
-    this.proxy          = TaquetCore.proxy;
+    if(!matched) {
+      return "";
+    } else if(matched.length === 1) {
+      return match.indexOf(",")===0?"":", ";
+    } else if(matched.length === 2) {
+      return ",";
+    } else {
+      throw new Error("data-cid is corrupted");
+    }
+  });
+
+  this.el.setAttribute("data-cid", cid);
+}
+
+function _handleElement(element, delegate) {
+  /*jshint validthis:true */
+
+  if(element) {
+    _backboneView.prototype.setElement.call(this, element, delegate);
+    _addCid.call(this);
+  }
+
+  return this;
+}
+
+Backbone.View = function (options) {
+
+  this.ID             = "Backbone.View";
+
+  this.proxy          = TaquetCore.proxy;
 
 //      this.$window        = TaquetCore.$window;
 //      this.$document      = TaquetCore.$document;
 
-    BaseEvent.call(this, options);
+  BaseEvent.call(this, options);
 
-    // initialize is called in the following call
-    Backbone.View.call(this, options);
+  // initialize is called in the following call
+  _backboneView.call(this, options);
 
-    _handleElement.call(this);
-  };
+//  _handleCid.call(this);
+  _bubbleEventsManager.add(this.cid, this);
+};
 
-  //TODO Consider overriding listenTo & listenToOnce
-  _.extend(BaseView.prototype, Backbone.View.prototype, {
+_.extend(Backbone.View.prototype, _backboneView.prototype, {
 
-    initialize: function() {
-      _handleElement.call(this);
-      _bubbleEventsManager.add(this.cid, this);
-    },
+  setElement: function(element, delegate) {
+    if(this.el instanceof HTMLElement && element && this.el !== element) {
+      _removeCid.call(this);
+    }
 
-    setElement: function(element) {
-      _handleElement.call(this, element);
-    },
+    return _handleElement.call(this, element, delegate);
+  },
 
-    render: function() {
-      if(this.el) {
-        _handleElement.call(this, this.el);
+  render: function() {
+    if(this.el) {
+      _addCid.call(this);
+    }
+
+    return this;
+  },
+
+  remove: function() {
+    if(this.commands) {
+      for(var i = 0, l = this.commands.length; i<l; i++) {
+        this.removeCommand.call(this, this.commands[i]);
       }
+    }
 
+    _removeCid.call(this);
+
+    _bubbleEventsManager.remove(this.cid);
+    _backboneView.prototype.remove.call(this);
+  },
+
+  trigger: function(name) {
+    var args = [name].concat([].slice.call(arguments, 1));
+
+    if(typeof name === "object" && name instanceof BubbleEvent) {
+      _bubbleEventsManager.trigger.apply(this, args);
       return this;
-    },
-
-    remove: function() {
-      if(this.commands) {
-        for(var i = 0, l = this.commands.length; i<l; i++) {
-          this.removeCommand.call(this, this.commands[i]);
-        }
-      }
-
-      if(this.el.getAttribute("data-cid") === this.cid) {
-        this.el.removeAttribute("data-cid");
-      }
-
-      _bubbleEventsManager.remove(this.cid);
-      Backbone.View.prototype.remove.call(this);
-    },
-
-    trigger: function(name) {
-      var args = [name].concat([].slice.call(arguments, 1));
-
-      if(typeof name === "object" && name instanceof BubbleEvent) {
-        _bubbleEventsManager.trigger.apply(this, args);
-        return this;
-      }
-
-      return Backbone.Events.trigger.apply(this, args);
-    },
-
-    /**
-     * Abstract Command handler method
-     */
-    commandHandler: function(command){
-      console.warn("commandHandler needs to be overriden. The following command was received, but ignored:", command);
     }
 
-  }, BaseEvent.prototype);
-
-  //  BaseView.extend = Backbone.View.extend;
-  BaseView.extend = function(props, staticProps) {
-
-    if(props.hasOwnProperty("initialize")) {
-      var initialize = props.initialize;
-      props.initialize = function() {
-        var initialized = initialize.call(this);
-        BaseView.prototype.initialize.call(this);
-        return initialized;
-      };
-    }
-
-    if(props.hasOwnProperty("render")) {
-      var render = props.render;
-      props.render = function() {
-        var rendered = render.call(this);
-        BaseView.prototype.render.call(this);
-        return rendered;
-      };
-    }
-
-    var commands;
-    if(this.prototype.hasOwnProperty("commands")){
-      commands = this.prototype.commands;
-    }
-
-    if(props.hasOwnProperty("commands")) {
-      [].unshift.apply(props.commands, commands);
-    } else {
-      props.commands = commands;
-    }
-
-    if(props.hasOwnProperty("stopListening")) {
-      console.warn("stopListening() is not supposed to be overriden");
-    }
-
-    if(props.hasOwnProperty("remove")) {
-      console.warn("remove() is not supposed to be overriden");
-    }
-
-    if(props.hasOwnProperty("setElement")) {
-      console.warn("setElement() is not supposed to be overriden");
-    }
-
-    if(props.hasOwnProperty("stopListening")) {
-      console.warn("stopListening() is not supposed to be overriden");
-    }
-
-    return Backbone.View.extend.call(this, props, staticProps);
-  };
+    return Backbone.Events.trigger.apply(this, args);
+  },
 
   /**
-   * adds the data-cid attribute to this.el || element
-   * @param element (optional) new DOM element
-   * @private
+   * Abstract Command handler method
    */
-  function _handleElement(element) {
-    var cid;
-    /*jshint validthis:true */
-    if(element) {
-      if(element instanceof $) {
-        element = element[0];
-      }
-
-      cid = element.getAttribute("data-cid");
-
-      if(this.el && this.el !== element) {
-        if(cid && cid !== this.cid) {
-          throw new Error("The given DOM is already associated to a View, with cid::"+cid);
-        }
-
-        this.el.removeAttribute("data-cid");
-      }
-
-      element.setAttribute("data-cid", this.cid);
-
-      Backbone.View.prototype.setElement.call(this, element);
-
-    } else if(this.el) {
-      this.el.setAttribute("data-cid", this.cid);
-    }
+  commandHandler: function(command){
+    console.warn("commandHandler needs to be overriden. The following command was received, but ignored:", command);
   }
 
-  return BaseView;
-}));
+}, BaseEvent.prototype);
+
+//Backbone.View.extend = Backbone.View.extend;
+Backbone.View.extend = function(props, staticProps) {
+
+  if(props.hasOwnProperty("render")) {
+    var render = props.render;
+    props.render = function() {
+      var rendered = render.call(this);
+      Backbone.View.prototype.render.call(this);
+      return rendered;
+    };
+  }
+
+  var commands;
+  if(this.prototype.hasOwnProperty("commands")){
+    commands = this.prototype.commands;
+  }
+
+  if(props.hasOwnProperty("commands")) {
+    [].unshift.apply(props.commands, commands);
+  } else {
+    props.commands = commands;
+  }
+
+  if(props.hasOwnProperty("stopListening")) {
+    console.warn("stopListening() is not supposed to be overriden");
+  }
+
+  if(props.hasOwnProperty("remove")) {
+    console.warn("remove() is not supposed to be overriden");
+  }
+
+  if(props.hasOwnProperty("setElement")) {
+    console.warn("setElement() is not supposed to be overriden");
+  }
+
+  if(props.hasOwnProperty("stopListening")) {
+    console.warn("stopListening() is not supposed to be overriden");
+  }
+
+  return _backboneView.extend.call(this, props, staticProps);
+};

@@ -1,34 +1,15 @@
-(function(parent, factory) {
-  "use strict";
-  if (typeof define === 'function' && define.amd) {
-    define([
-      'com/stilva/taquet/event/BaseEvent',
-      'com/stilva/taquet/util/TaquetCore',
-      'underscore',
-      'backbone'
-    ], function(BaseEvent, TaquetCore, _, Backbone) {
-      return factory(BaseEvent, TaquetCore, _, Backbone);
-    });
-  } else {
-    // Browser globals
-    parent.BaseApplication = factory(parent.BaseEvent, parent.TaquetCore, parent._, parent.Backbone);
-  }
-}(this, function(BaseEvent, TaquetCore, _, Backbone) {
-  "use strict";
+/* globals BaseEvent, TaquetCore, _, Backbone */
+/* jshint strict: false */
+var BaseApplication = function() {
 
-  var BaseApplication = function() {
+  BaseEvent.apply(this);
 
-    BaseEvent.apply(this);
+  this.initialize.apply(this);
 
-    this.initialize.apply(this);
+  this.$window.trigger(TaquetCore.RESIZE_EVENT);
+};
 
-    this.$window.trigger(this.RESIZE);
-  };
+_.extend(BaseApplication.prototype, TaquetCore);
+_.extend(BaseApplication.prototype, Backbone.Events);
 
-  _.extend(BaseApplication.prototype, TaquetCore);
-  _.extend(BaseApplication.prototype, Backbone.Events);
-
-  BaseApplication.extend = Backbone.View.extend;
-
-  return BaseApplication;
-}));
+BaseApplication.extend = Backbone.View.extend;

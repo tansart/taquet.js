@@ -1,8 +1,8 @@
+/* globals _, Taquet, jasmine */
 describe("CommandManagerSpec ::", function() {
   "use strict";
 
-  var _               = require("underscore"),
-      CommandManager  = require("com/stilva/taquet/event/CommandManager");
+  var CommandManager  = Taquet.CommandManager;
 
   var manager     = new CommandManager(_.uniqueId()),
       manager2    = new CommandManager(_.uniqueId()),
