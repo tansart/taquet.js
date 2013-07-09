@@ -1,0 +1,3 @@
+/* exported OriginValidator */
+function OriginValidator(){
+}

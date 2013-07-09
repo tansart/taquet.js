@@ -3,7 +3,7 @@
 $(function(){
   "use strict";
 
-  describe("Bubbling Events in taquet.js", function() {
+  describe("BubbleEventSpec", function() {
 
     function appendElement(tagName, id, parent) {
 
@@ -158,9 +158,9 @@ $(function(){
 
       /* global jasmine, spyOn */
 
-      var bubbleEvent, bubbleEvent2,
+      var bubbleEvent, bubbleEvent2, bubbleDown,
         handlerScope = null, innerHandler,
-        wrapperViewHandler, articleViewHandler, baseViewOneHandler, baseViewTwoHandler;
+        wrapperViewHandler, articleViewHandler, baseViewOneHandler, baseViewTwoHandler, bubbleDownHandler;
 
       innerHandler = jasmine.createSpy('innerHandler');
       wrapperViewHandler = {
@@ -177,12 +177,15 @@ $(function(){
 
       spyOn(wrapperViewHandler, 'on').andCallThrough();
 
+      bubbleDownHandler = jasmine.createSpy('bubbleDownHandler');
+
       articleViewHandler = jasmine.createSpy('articleViewHandler');
       baseViewOneHandler = jasmine.createSpy('baseViewOneHandler');
       baseViewTwoHandler = jasmine.createSpy('baseViewTwoHandler');
 
       bubbleEvent = new BubbleEvent("bubble");
       bubbleEvent2 = new BubbleEvent("bubble-two");
+      bubbleDown = new BubbleEvent("bubbleDown", false);
 
       wrapperView.on("bubble", wrapperViewHandler.on);
       articleView.on("bubble", articleViewHandler);
@@ -193,6 +196,11 @@ $(function(){
       wrapperView.on("bubble-two", wrapperViewHandler.on);
       articleView.on("bubble-two", wrapperViewHandler.two);
       baseViewThree.trigger(bubbleEvent2);
+
+      wrapperView.on("bubbleDown", bubbleDownHandler);
+      articleView.on("bubbleDown", bubbleDownHandler);
+      baseViewFour.on("bubbleDown", bubbleDownHandler);
+      deeplyNestedView.trigger(bubbleDown);
 
       it("does not react to parallel events", function() {
         expect(baseViewOneHandler).not.toHaveBeenCalled();
@@ -218,6 +226,16 @@ $(function(){
 
       it("keeps the handler's scope", function() {
         expect(handlerScope).toBe(wrapperView);
+      });
+
+      it("bubbles the events down the dom", function() {
+        expect(bubbleDownHandler).toHaveBeenCalled();
+        waitsFor(function() {
+          return (bubbleDownHandler.callCount === 3);
+        });
+        runs(function() {
+          expect(bubbleDownHandler.callCount).toBe(3);
+        });
       });
     });
 

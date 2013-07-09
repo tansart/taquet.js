@@ -4,6 +4,7 @@ module.exports = function(grunt) {
     mOutput = 'taquet.js',
     mFiles = [
       'src/com/stilva/util/Queue.js',
+      'src/com/stilva/taquet/util/OriginValidator.js',
       'src/com/stilva/taquet/util/TaquetCore.js',
       'src/com/stilva/taquet/event/BubbleEventManager.js',
       'src/com/stilva/taquet/event/CommandManager.js',
@@ -64,7 +65,7 @@ module.exports = function(grunt) {
         options: {
           keepRunner: true,
           specs: 'test/com/stilva/taquet/*Spec.js',
-          host: 'http://127.0.0.1:<%= connect.test.port %>/',
+          host: 'http://127.0.0.1:<%= connect.test.port %>/'
         }
       }
     },
@@ -89,6 +90,10 @@ module.exports = function(grunt) {
       scripts: {
         files: ['src/**/*.js', 'src/out/*.tmpl', 'src/**/*Spec.js'],
         tasks: ['test']
+      },
+      compile: {
+        files: ['src/**/*.js', 'src/out/*.tmpl', 'src/**/*Spec.js'],
+        tasks: ['compile']
       }
     }
 
@@ -108,7 +113,8 @@ module.exports = function(grunt) {
 //  grunt.registerTask('default', ['concat', 'jshint']);
 
   grunt.registerTask('compile', ['concat', 'jshint']);
-  grunt.registerTask('test', ['concat', 'jshint', 'connect', 'qunit', 'jasmine']);
+  grunt.registerTask('test', ['compile', 'connect', 'qunit', 'jasmine']);
+  grunt.registerTask('specs', ['compile', 'connect', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
 
 };

@@ -17,7 +17,6 @@ describe("CommandsSpec :: ", function() {
   OuterView = Backbone.View.extend({
     commands: [START_UP],
     initialize: function() {
-      console.log("outerview initialised");
       this.son = new InnerView();
     },
     commandHandler: outerCommandHandler
@@ -25,7 +24,6 @@ describe("CommandsSpec :: ", function() {
 
   InnerView = OuterView.extend({
     initialize: function() {
-      console.log("innerview initialised");
       this.son = new InnerInnerView({commands: [RESET]});
     },
     commandHandler: innerCommandHandler
@@ -34,8 +32,6 @@ describe("CommandsSpec :: ", function() {
   InnerInnerView = OuterView.extend({
     commands: [RESET],
     initialize: function() {
-      console.log("inner-innerview initialised");
-      // nothing
     },
     commandHandler: innerInnerCommandHandler
   });

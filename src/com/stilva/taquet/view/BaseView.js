@@ -1,5 +1,5 @@
 /* jshint strict: false */
-/* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager */
+/* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, OriginValidator, attribute */
 var _backboneView = Backbone.View,
   _bubbleEventsManager = new BubbleEventManager();
 
@@ -13,7 +13,7 @@ function _addCid() {
   var cid;
 
   if(this.el) {
-    cid = this.el.getAttribute("data-cid");
+    cid = this.el.getAttribute(attribute);
     if(cid) {
       if(cid.indexOf(this.cid) === -1) {
         cid += ", "+this.cid;
@@ -24,14 +24,14 @@ function _addCid() {
       cid = this.cid;
     }
 
-    this.el.setAttribute("data-cid", cid);
+    this.el.setAttribute(attribute, cid);
   }
 }
 
 function _removeCid() {
   /*jshint validthis:true */
   var matched,
-      cid = this.el.getAttribute("data-cid");
+      cid = this.el.getAttribute(attribute);
 
   cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'), function(match) {
 
@@ -48,7 +48,7 @@ function _removeCid() {
     }
   });
 
-  this.el.setAttribute("data-cid", cid);
+  this.el.setAttribute(attribute, cid);
 }
 
 function _handleElement(element, delegate) {
@@ -98,16 +98,16 @@ _.extend(Backbone.View.prototype, _backboneView.prototype, {
     return this;
   },
 
-  remove: function() {
+  remove: function(origin) {
     if(this.commands) {
       for(var i = 0, l = this.commands.length; i<l; i++) {
         this.removeCommand.call(this, this.commands[i]);
       }
     }
 
-    _removeCid.call(this);
-
-    _bubbleEventsManager.remove(this.cid);
+    if(!(origin instanceof OriginValidator)) {
+      _bubbleEventsManager.remove.call(this);
+    }
     _backboneView.prototype.remove.call(this);
   },
 

@@ -1,6 +1,6 @@
 /* jshint strict: false */
 /* exported BubbleEventManager */
-/* globals _ */
+/* globals _, OriginValidator, attribute */
 
 //TODO see if there is the need for a MutationObserver
 // http://jsperf.com/array-data-insertion
@@ -10,11 +10,8 @@ var _cids = {};
 function _eventIterator(eventTree, event) {
   var src;
 
-
   if(eventTree.length > 0) {
     try {
-//      src = eventTree.splice(0, 1)[0];
-//      src.trigger.apply(src, event);
       src = eventTree.shift();
       src.trigger.apply(src, event);
     } catch(e) {
@@ -22,28 +19,12 @@ function _eventIterator(eventTree, event) {
     }
 
     if(!event[1]._stopPropagation) {
-//      setImmediate(_eventIterator, eventTree, event);
       _.defer(_eventIterator, eventTree, event);
     }
   }
 }
 
-function _checkCid(cid) {
-  console.log(arguments);
-//  if(_cids.hasOwnProperty(cid)) {
-//    tree.push(_cids[cid]);
-//  }
-}
-
-function _hasParent(dom) {
-  try {
-    return (dom.parentNode !== null && dom.parentNode !== undefined);
-  } catch(e) {
-    return console.error(e);
-  }
-}
-
-function _checkHierarchy(dom) {
+function _bubbleUpHierarchy(dom) {
   var matched,
     tree    = [],
     parent  = dom,
@@ -51,13 +32,46 @@ function _checkHierarchy(dom) {
 
   while(parent.nodeName !== "HTML" && (parent = parent.parentNode)) {
     // hasAttribute() is broken in <IE8
-    if(cid = parent.getAttribute("data-cid")) {
+    if(cid = parent.getAttribute(attribute)) {
       matched = cid.match(/[^,\s]+/ig);
       while(cid = matched.shift()) {
         if(_cids.hasOwnProperty(cid)) {
           tree.push(_cids[cid]);
         }
       }
+    }
+  }
+
+  return tree;
+}
+
+function _bubbleDownHierarchy(dom) {
+  var matched,
+    index,
+    child,
+    children,
+    tree    = [],
+    cid     = null,
+    pattern = /[^,\s]+/g;
+
+  var concat = [].push,
+      slice = [].slice;
+
+  if(!dom) {
+    return;
+  }
+
+  index = 0;
+  children = [dom];
+  while(child = children[index]) {
+    concat.apply(children, slice.call(child.children));
+    ++index;
+  }
+
+  while(child = children[--index]){
+    cid = child.getAttribute(attribute);
+    if(cid && (matched = cid.match(pattern))) {
+      concat.apply(tree, matched);
     }
   }
 
@@ -78,24 +92,43 @@ function BubbleEventManager() {
     _cids[cid] = view;
   };
 
-  this.remove = function(cid) {
-    delete _cids[cid];
-  };
-
   this.trigger = function (e) {
     var args, eventTree;
 
     // this.trigger is only invoked should e be an instance of BubbleEvent
-    if(typeof e.type !== "string") {
-      return;
+    if(typeof e !== "string") {
+      args = [e.type, e].concat([].slice.call(arguments, 1));
+
+      //TODO see if caching the last few event trees is worth it?
+      if(this.el && !!this.el.parentNode) {
+        if(e.bubbleUp) {
+          eventTree = _bubbleUpHierarchy(this.el);
+        } else {
+          eventTree = _bubbleDownHierarchy(this.el);
+        }
+        _eventIterator(eventTree, args);
+      }
     }
+  };
 
-    args = [e.type, e].concat([].slice.call(arguments, 1));
+  this.remove = function() {
+    var leaf,
+        validator,
+        eventTree;
 
-    //TODO see if caching the last few event trees is worth it?
-    if(this.el && _hasParent(this.el)) {
-      eventTree = _checkHierarchy(this.el);
-      _eventIterator(eventTree, args);
+    if(this.el && !!this.el.firstChild) {
+      eventTree = _bubbleDownHierarchy(this.el);
+
+      if(eventTree) {
+        validator = new OriginValidator();
+
+        while(leaf = eventTree.shift()) {
+          if(_cids.hasOwnProperty(leaf)) {
+            _cids[leaf].off();
+            _cids[leaf].remove(validator);
+          }
+        }
+      }
     }
   };
 

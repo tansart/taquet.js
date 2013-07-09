@@ -14,13 +14,15 @@
   "use strict";
   var BubbleEvent;
 
-  BubbleEvent = function (type, cancellable) {
+  BubbleEvent = function (type, bubbleUp, cancellable) {
 
     this.type             = type;
 
+    this.bubbleUp         = bubbleUp || true;
+
     this.timestamp        = new Date().valueOf();
 
-    this.cancellable       = cancellable;
+    this.cancellable      = cancellable || true;
 
     this._stopPropagation = false;
 
