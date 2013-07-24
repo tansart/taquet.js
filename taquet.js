@@ -75,9 +75,7 @@
     isEmpty: function() {
       return this.length === 0;
     }
-  });  /* exported OriginValidator */
-  function OriginValidator(){
-  }  /* jshint strict: false */
+  });  /* jshint strict: false */
   /* globals $ */
   var TaquetCore,
       $window = $(window),
@@ -120,31 +118,60 @@
   //TODO see if there is the need for a MutationObserver
   // http://jsperf.com/array-data-insertion
 
+  /**
+   * Collection containing cid <=> Backbone.View relation
+   * @type {{}}
+   * @private
+   */
   var _cids = {};
 
-  function _eventIterator(eventTree, event) {
-    var src;
+  /**
+   *
+   * @param target
+   * @param event
+   */
+  function dispatcher(target, event) {
+    // stops propagation of the event.
+    if(event[1]._stopPropagation) {
+      return;
+    }
 
-    if(eventTree.length > 0) {
-      try {
-        src = eventTree.shift();
-        src.trigger.apply(src, event);
-      } catch(e) {
-        throw new Error(e);
-      }
-
-      if(!event[1]._stopPropagation) {
-        _.defer(_eventIterator, eventTree, event);
-      }
+    try {
+      target.trigger.apply(target, event);
+    } catch(e) {
+      throw new Error(e);
     }
   }
 
+  /**
+   * Helper method which iterates through the eventTree object,
+   * then triggers the associated event with the appropriate scope.
+   * @param eventTree Array containing the node with a
+   * @param event Array containing the event name, BubbleEvent object and extra parameters
+   * @private
+   */
+  function _eventIterator(eventTree, event) {
+    //TODO see if this is worthwhile. The idea was to avoid recursive calls
+    while(eventTree[0]){
+      _.defer(dispatcher, eventTree.shift(), event);
+    }
+  }
+
+  /**
+   * Given a dom node, it returns a collection of Backbone.Views
+   * that are attached to the given tree, from the given node all the way up to the roots.
+   * @param dom A given dom node to traverse all the way up
+   * @returns Array containing Backbone.Views
+   * @private
+   */
+  //TODO Maybe allow for a more module based approach, where events bubble up within a module only?
   function _bubbleUpHierarchy(dom) {
     var matched,
-      tree    = [],
-      parent  = dom,
-      cid     = null;
+        tree    = [],
+        parent  = dom,
+        cid     = null;
 
+    // Goes up the DOM hierarchy
     while(parent.nodeName !== "HTML" && (parent = parent.parentNode)) {
       // hasAttribute() is broken in <IE8
       if(cid = parent.getAttribute(attribute)) {
@@ -160,14 +187,21 @@
     return tree;
   }
 
+  /**
+   * Given a dom node, it returns a collection of Backbone.Views
+   * that are attached to the given tree, from the given node to all its leafs.
+   * @param dom A given dom node to traverse all the way up
+   * @returns Array containing Backbone.Views
+   * @private
+   */
   function _bubbleDownHierarchy(dom) {
     var matched,
-      index,
-      child,
-      children,
-      tree    = [],
-      cid     = null,
-      pattern = /[^,\s]+/g;
+        index,
+        child,
+        children,
+        tree    = [],
+        cid     = null,
+        pattern = /[^,\s]+/g;
 
     var concat = [].push,
         slice = [].slice;
@@ -178,11 +212,14 @@
 
     index = 0;
     children = [dom];
+
+    // Flattens the dom tree into an array
     while(child = children[index]) {
       concat.apply(children, slice.call(child.children));
       ++index;
     }
 
+    // Goes through the flattened tree and filters through the nodes
     while(child = children[--index]){
       cid = child.getAttribute(attribute);
       if(cid && (matched = cid.match(pattern))) {
@@ -197,62 +234,65 @@
    * Singleton. There's no real reason for BubblesManager to be a Multiton
    * as the events propagate through the hierarchy. 1 DOM, 1 BubbleEventManger
    */
+  //TODO unless we go for a more mudole-based approach?
   function BubbleEventManager() {
 
+    //TODO maybe a getInstance interface instead?
     if(BubbleEventManager.prototype._instance) {
       return BubbleEventManager.prototype._instance;
     }
 
-    this.add = function(cid, view) {
-      _cids[cid] = view;
-    };
-
-    this.trigger = function (e) {
-      var args, eventTree;
-
-      // this.trigger is only invoked should e be an instance of BubbleEvent
-      if(typeof e !== "string") {
-        args = [e.type, e].concat([].slice.call(arguments, 1));
-
-        //TODO see if caching the last few event trees is worth it?
-        if(this.el && !!this.el.parentNode) {
-          if(e.bubbleUp) {
-            eventTree = _bubbleUpHierarchy(this.el);
-          } else {
-            eventTree = _bubbleDownHierarchy(this.el);
-          }
-          _eventIterator(eventTree, args);
-        }
-      }
-    };
-
-    this.remove = function() {
-      var leaf,
-          validator,
-          eventTree;
-
-      if(this.el && !!this.el.firstChild) {
-        eventTree = _bubbleDownHierarchy(this.el);
-
-        if(eventTree) {
-          validator = new OriginValidator();
-
-          while(leaf = eventTree.shift()) {
-            if(_cids.hasOwnProperty(leaf)) {
-              _cids[leaf].off();
-              _cids[leaf].remove(validator);
-            }
-          }
-        }
-      }
-    };
-
     BubbleEventManager.prototype._instance = this;
 
+    // Attempt at making it a more solid singleton :)
     if (Object.hasOwnProperty('freeze')) {
       Object.freeze(BubbleEventManager.prototype._instance);
     }
-  }  /* exported CommandManager */
+  }
+
+  BubbleEventManager.prototype.add = function(cid, view) {
+    _cids[cid] = view;
+  };
+
+  BubbleEventManager.prototype.trigger = function (e) {
+    var args, eventTree;
+
+    // this.trigger is only invoked should e be an instance of BubbleEvent
+    if(typeof e !== "string") {
+      args = [e.type, e].concat([].slice.call(arguments, 1));
+
+      //TODO see if caching the last few event trees is worth it?
+      if(this.el && !!this.el.parentNode) {
+        if(e.bubbleUp) {
+          eventTree = _bubbleUpHierarchy(this.el);
+        } else {
+          eventTree = _bubbleDownHierarchy(this.el);
+        }
+        _eventIterator(eventTree, args);
+      }
+    }
+  };
+
+  BubbleEventManager.prototype.remove = function() {
+    var leaf,
+      validator,
+      eventTree;
+
+    if(this.el && !!this.el.firstChild) {
+      eventTree = _bubbleDownHierarchy(this.el);
+
+      if(eventTree) {
+        validator = new OriginValidator();
+
+        while(leaf = eventTree.shift()) {
+          if(_cids.hasOwnProperty(leaf)) {
+            _cids[leaf].off();
+            _cids[leaf].remove(validator);
+          }
+        }
+      }
+    }
+  };  /* exported CommandManager */
   /* jshint strict: false */
 
   /**
@@ -442,13 +482,13 @@
   _.extend(BaseApplication.prototype, Backbone.Events);
 
   BaseApplication.extend = Backbone.View.extend;  /* jshint strict: false */
-  /* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, OriginValidator, attribute */
+  /* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, attribute */
   var _backboneView = Backbone.View,
-    _bubbleEventsManager = new BubbleEventManager();
+      _bubbleEventsManager = new BubbleEventManager(),
+      OriginValidator = function(){};
 
   /**
    * adds the data-cid attribute to this.el || element
-   * @param element (optional) new DOM element
    * @private
    */
   function _addCid() {
@@ -471,29 +511,38 @@
     }
   }
 
+  /**
+   * removes the data-cid attribute from this.el || element
+   * @private
+   */
   function _removeCid() {
     /*jshint validthis:true */
     var matched,
         cid = this.el.getAttribute(attribute);
 
-    cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'), function(match) {
+    cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'),
+      function(match) {
+        matched = match.match(/,/g);
 
-      matched = match.match(/,/g);
-
-      if(!matched) {
-        return "";
-      } else if(matched.length === 1) {
-        return match.indexOf(",")===0?"":", ";
-      } else if(matched.length === 2) {
-        return ",";
-      } else {
-        throw new Error("data-cid is corrupted");
+        if(!matched) {
+          return "";
+        } else if(matched.length === 1) {
+          return match.indexOf(",")===0?"":", ";
+        } else if(matched.length === 2) {
+          return ",";
+        } else {
+          throw new Error("data-cid is corrupted");
+        }
       }
-    });
+    );
 
     this.el.setAttribute(attribute, cid);
   }
 
+  /**
+   * patch for setElement
+   * @private
+   */
   function _handleElement(element, delegate) {
     /*jshint validthis:true */
 
@@ -505,24 +554,28 @@
     return this;
   }
 
+  /**
+   * Patching Backbone.View
+   * @param options Object containing configuration options
+   * @constructor
+   */
   Backbone.View = function (options) {
-
-    this.ID             = "Backbone.View";
 
     this.proxy          = TaquetCore.proxy;
 
-  //      this.$window        = TaquetCore.$window;
-  //      this.$document      = TaquetCore.$document;
-
     BaseEvent.call(this, options);
 
-    // initialize is called in the following call
+    // This calls the default Backbone.View, which in turn
+    // calls initialize();
     _backboneView.call(this, options);
 
-  //  _handleCid.call(this);
+    // Lets the manager add the data attributes
     _bubbleEventsManager.add(this.cid, this);
   };
 
+  // In Backbone.js, the this.el property can be given through the options,
+  // set with setElement(), or created in render().
+  // These following methods are making sure that the cid always stays up-to-date
   _.extend(Backbone.View.prototype, _backboneView.prototype, {
 
     setElement: function(element, delegate) {
@@ -541,6 +594,7 @@
       return this;
     },
 
+    // Core remove method that takes care of the commands, cid, etc;
     remove: function(origin) {
       if(this.commands) {
         for(var i = 0, l = this.commands.length; i<l; i++) {
@@ -548,6 +602,7 @@
         }
       }
 
+      //TODO there must be a cleaner way to avoid circular calling of remove();
       if(!(origin instanceof OriginValidator)) {
         _bubbleEventsManager.remove.call(this);
       }
@@ -565,16 +620,20 @@
       return Backbone.Events.trigger.apply(this, args);
     },
 
-    /**
-     * Abstract Command handler method
-     */
+    // Abstract Command handler method
     commandHandler: function(command){
       console.warn("commandHandler needs to be overriden. The following command was received, but ignored:", command);
     }
 
   }, BaseEvent.prototype);
 
-  //Backbone.View.extend = Backbone.View.extend;
+  /**
+   * Patches backbone's extend method so that Taquet's core functionalities don't
+   * disappear when a user extends the Backbone.Views
+   * @param props
+   * @param staticProps
+   * @returns Whatever the original Backbone.View would return;
+   */
   Backbone.View.extend = function(props, staticProps) {
 
     if(props.hasOwnProperty("render")) {
@@ -616,16 +675,14 @@
     return _backboneView.extend.call(this, props, staticProps);
   };  /* jshint strict: false */
   /* globals Backbone, _ */
-  var BaseAnimatedView = function(options) {
+  var AnimatedView = function(options) {
     // BaseAnimatedView's init code
-    this.ID = "BaseAnimatedView";
-
     Backbone.View.apply(this, [options]);
   };
 
-  _.extend(BaseAnimatedView.prototype, Backbone.View.prototype, {
+  _.extend(AnimatedView.prototype, Backbone.View.prototype, {
 
-    // all the BaseAnimatedView's methods
+    // all the AnimatedView's methods
     resize: function() {
     },
 
@@ -638,7 +695,7 @@
     }
   });
 
-  BaseAnimatedView.extend = Backbone.View.extend;  /* jshint strict: false */
+  AnimatedView.extend = Backbone.View.extend;  /* jshint strict: false */
   /* globals BaseEvent, _, Backbone */
   var BaseModel = function (options) {
 
@@ -719,7 +776,8 @@
   var Taquet;
   
   Taquet = {
-    CommandManager: CommandManager
+    CommandManager: CommandManager,
+    AnimatedView: AnimatedView
   };
 
   return Taquet;

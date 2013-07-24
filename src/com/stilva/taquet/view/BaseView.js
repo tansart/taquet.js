@@ -1,11 +1,11 @@
 /* jshint strict: false */
-/* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, OriginValidator, attribute */
+/* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, attribute */
 var _backboneView = Backbone.View,
-  _bubbleEventsManager = new BubbleEventManager();
+    _bubbleEventsManager = new BubbleEventManager(),
+    OriginValidator = function(){};
 
 /**
  * adds the data-cid attribute to this.el || element
- * @param element (optional) new DOM element
  * @private
  */
 function _addCid() {
@@ -28,29 +28,38 @@ function _addCid() {
   }
 }
 
+/**
+ * removes the data-cid attribute from this.el || element
+ * @private
+ */
 function _removeCid() {
   /*jshint validthis:true */
   var matched,
       cid = this.el.getAttribute(attribute);
 
-  cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'), function(match) {
+  cid = cid.replace(new RegExp(",*[\\s]*"+this.cid+"[\\s]*,*", 'ig'),
+    function(match) {
+      matched = match.match(/,/g);
 
-    matched = match.match(/,/g);
-
-    if(!matched) {
-      return "";
-    } else if(matched.length === 1) {
-      return match.indexOf(",")===0?"":", ";
-    } else if(matched.length === 2) {
-      return ",";
-    } else {
-      throw new Error("data-cid is corrupted");
+      if(!matched) {
+        return "";
+      } else if(matched.length === 1) {
+        return match.indexOf(",")===0?"":", ";
+      } else if(matched.length === 2) {
+        return ",";
+      } else {
+        throw new Error("data-cid is corrupted");
+      }
     }
-  });
+  );
 
   this.el.setAttribute(attribute, cid);
 }
 
+/**
+ * patch for setElement
+ * @private
+ */
 function _handleElement(element, delegate) {
   /*jshint validthis:true */
 
@@ -62,24 +71,28 @@ function _handleElement(element, delegate) {
   return this;
 }
 
+/**
+ * Patching Backbone.View
+ * @param options Object containing configuration options
+ * @constructor
+ */
 Backbone.View = function (options) {
-
-  this.ID             = "Backbone.View";
 
   this.proxy          = TaquetCore.proxy;
 
-//      this.$window        = TaquetCore.$window;
-//      this.$document      = TaquetCore.$document;
-
   BaseEvent.call(this, options);
 
-  // initialize is called in the following call
+  // This calls the default Backbone.View, which in turn
+  // calls initialize();
   _backboneView.call(this, options);
 
-//  _handleCid.call(this);
+  // Lets the manager add the data attributes
   _bubbleEventsManager.add(this.cid, this);
 };
 
+// In Backbone.js, the this.el property can be given through the options,
+// set with setElement(), or created in render().
+// These following methods are making sure that the cid always stays up-to-date
 _.extend(Backbone.View.prototype, _backboneView.prototype, {
 
   setElement: function(element, delegate) {
@@ -98,6 +111,7 @@ _.extend(Backbone.View.prototype, _backboneView.prototype, {
     return this;
   },
 
+  // Core remove method that takes care of the commands, cid, etc;
   remove: function(origin) {
     if(this.commands) {
       for(var i = 0, l = this.commands.length; i<l; i++) {
@@ -105,6 +119,7 @@ _.extend(Backbone.View.prototype, _backboneView.prototype, {
       }
     }
 
+    //TODO there must be a cleaner way to avoid circular calling of remove();
     if(!(origin instanceof OriginValidator)) {
       _bubbleEventsManager.remove.call(this);
     }
@@ -122,16 +137,20 @@ _.extend(Backbone.View.prototype, _backboneView.prototype, {
     return Backbone.Events.trigger.apply(this, args);
   },
 
-  /**
-   * Abstract Command handler method
-   */
+  // Abstract Command handler method
   commandHandler: function(command){
     console.warn("commandHandler needs to be overriden. The following command was received, but ignored:", command);
   }
 
 }, BaseEvent.prototype);
 
-//Backbone.View.extend = Backbone.View.extend;
+/**
+ * Patches backbone's extend method so that Taquet's core functionalities don't
+ * disappear when a user extends the Backbone.Views
+ * @param props
+ * @param staticProps
+ * @returns Whatever the original Backbone.View would return;
+ */
 Backbone.View.extend = function(props, staticProps) {
 
   if(props.hasOwnProperty("render")) {

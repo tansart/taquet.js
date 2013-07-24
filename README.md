@@ -14,7 +14,7 @@ taquet extends Backbone.js and adds the following features:
 - [Development prerequisits](#development-prerequisits)
 	- [Installing taquet](#installing-taquet)
 - [Usage](#usage)
-	- [BaseView](#baseview)
+	- [View](#view)
 		- [Commands](#commands)
 		- [Command Object](#command-object)
 		- [Bubbling Events](#bubbling-events)
@@ -53,10 +53,12 @@ _Refer to [taquet-generator](https://github.com/stilva/taquet-generator) and  [y
 
 I recommend the use of the aforementioned yeoman generator, as it will create and extend the Views for you.
 
-###BaseView
-This is the most basic view that taquet has. For Commands, and bubbling Events to work extend from this view instead of `Backbone.View`. _Note that Commands are synchronous while Events are asynchronous_
+###View
 
-Instead of `Backbone.View.extend({(...)});`, use `BaseView.extend({(...)});`.
+Taquet extends Backbone.View by patching the original source.
+The original tests are included to make sure Taquet doesn't interfere with Backbone.View.
+
+_Note that Commands are synchronous while Events are asynchronous_
 
 ####Commands
 There are two ways to register commands:
@@ -65,7 +67,7 @@ There are two ways to register commands:
 2. Passing the commands via the contstructor.
 
 ```js
-var CustomView = BaseView.extend({
+var CustomView = Backbone.View.extend({
   //START_UP etc are strings.
   commands: [Commands.START_UP, Commands.SLEEP], // 1
   commandHandler: function(command) {

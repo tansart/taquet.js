@@ -4,7 +4,6 @@ module.exports = function(grunt) {
     mOutput = 'taquet.js',
     mFiles = [
       'src/com/stilva/util/Queue.js',
-      'src/com/stilva/taquet/util/OriginValidator.js',
       'src/com/stilva/taquet/util/TaquetCore.js',
       'src/com/stilva/taquet/event/BubbleEventManager.js',
       'src/com/stilva/taquet/event/CommandManager.js',
@@ -12,7 +11,7 @@ module.exports = function(grunt) {
       'src/com/stilva/taquet/event/BaseEvent.js',
       'src/com/stilva/taquet/application/BaseApplication.js',
       'src/com/stilva/taquet/view/BaseView.js',
-      'src/com/stilva/taquet/view/BaseAnimatedView.js',
+      'src/com/stilva/taquet/view/AnimatedView.js',
       'src/com/stilva/taquet/model/BaseModel.js',
       'src/com/stilva/taquet/router/BaseRouter.js'
     ];
@@ -88,11 +87,11 @@ module.exports = function(grunt) {
 
     watch: {
       scripts: {
-        files: ['src/**/*.js', 'src/out/*.tmpl', 'src/**/*Spec.js'],
-        tasks: ['test']
+        files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
+        tasks: ['compile', 'connect'/*, 'qunit'*/, 'jasmine']
       },
       compile: {
-        files: ['src/**/*.js', 'src/out/*.tmpl', 'src/**/*Spec.js'],
+        files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
         tasks: ['compile']
       }
     }
@@ -109,11 +108,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-benchmark');
 
   // Default task(s).
-  grunt.registerTask('default', ['watch']);
+  grunt.registerTask('default', ['watch:compile']);
 //  grunt.registerTask('default', ['concat', 'jshint']);
 
   grunt.registerTask('compile', ['concat', 'jshint']);
-  grunt.registerTask('test', ['compile', 'connect', 'qunit', 'jasmine']);
+//  grunt.registerTask('test', ['compile', 'connect', 'qunit', 'jasmine']);
+  grunt.registerTask('test', ['watch:scripts']);
   grunt.registerTask('specs', ['compile', 'connect', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
 

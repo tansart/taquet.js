@@ -38,12 +38,12 @@ describe("CommandManagerSpec ::", function() {
     expect(onCallBack.calls.length).toEqual(3);
   });
 
-  it("One command-type can be associated to many callbacks", function() {
+  it("one command-type can be associated to many callbacks", function() {
     expect(onCallBack2).toHaveBeenCalled();
     expect(onCallBack2.calls.length).toEqual(1);
   });
 
-  it("Commands are kept within their respective CommandManagers", function() {
+  it("commands are kept within their respective CommandManagers", function() {
     expect(onCallBack3).not.toHaveBeenCalled();
     manager2.exec.call(this, "TWO");
     expect(onCallBack3).toHaveBeenCalled();

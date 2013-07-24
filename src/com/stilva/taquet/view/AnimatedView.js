@@ -1,15 +1,13 @@
 /* jshint strict: false */
 /* globals Backbone, _ */
-var BaseAnimatedView = function(options) {
+var AnimatedView = function(options) {
   // BaseAnimatedView's init code
-  this.ID = "BaseAnimatedView";
-
   Backbone.View.apply(this, [options]);
 };
 
-_.extend(BaseAnimatedView.prototype, Backbone.View.prototype, {
+_.extend(AnimatedView.prototype, Backbone.View.prototype, {
 
-  // all the BaseAnimatedView's methods
+  // all the AnimatedView's methods
   resize: function() {
   },
 
@@ -22,4 +20,4 @@ _.extend(BaseAnimatedView.prototype, Backbone.View.prototype, {
   }
 });
 
-BaseAnimatedView.extend = Backbone.View.extend;
+AnimatedView.extend = Backbone.View.extend;
