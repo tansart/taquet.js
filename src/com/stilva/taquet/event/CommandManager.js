@@ -25,7 +25,7 @@ function CommandManager(uid) {
   }
 
   this.addCommand = function (type, callback) {
-    has(type).push({currentTarget:this, callback: callback});
+    has(type).push({scope:this, callback: callback});
   };
 
   this.remove = function (type) {
@@ -33,7 +33,7 @@ function CommandManager(uid) {
       console.warn(type, 'scope issue. Make sure to call exec with the right scope');
     } else if (commands && typeof commands[type] === "object") {
       for (var i = 0, l = commands[type].length; i<l; i++) {
-        if(this === commands[type][i].currentTarget) {
+        if(this === commands[type][i].scope) {
           commands[type].splice(i, 1);
           break;
         }
@@ -56,8 +56,8 @@ function CommandManager(uid) {
       for (; i<l; i++) {
         command = commands[type][i];
 
-        if(cInstanceOf || (!cInstanceOf && this !== command.currentTarget)) {
-          command.callback.apply(this, [{type:type, currentTarget:command.currentTarget}].concat([].slice.call(arguments, 1)));
+        if(cInstanceOf || (!cInstanceOf && this !== command.scope)) {
+          command.callback.apply(command.scope, [{type:type, currentTarget:this}].concat([].slice.call(arguments, 1)));
         }
       }
     }

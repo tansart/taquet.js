@@ -10,10 +10,10 @@ module.exports = function(grunt) {
       'src/com/stilva/taquet/event/CommandQueue.js',
       'src/com/stilva/taquet/event/BaseEvent.js',
       'src/com/stilva/taquet/application/BaseApplication.js',
-      'src/com/stilva/taquet/view/BaseView.js',
+      'src/com/stilva/taquet/view/View.js',
       'src/com/stilva/taquet/view/AnimatedView.js',
-      'src/com/stilva/taquet/model/BaseModel.js',
-      'src/com/stilva/taquet/router/BaseRouter.js'
+      'src/com/stilva/taquet/model/Model.js',
+      'src/com/stilva/taquet/router/Router.js'
     ];
 
   grunt.initConfig({

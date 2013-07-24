@@ -10,11 +10,6 @@ BaseEvent = function(options) {
   commandManager      = new CommandManager(options.commandManagerId || this.commandManagerId || singletonID);
 
   /**
-   * EVENTS
-   */
-  this.NAVIGATE = "NAVIGATE_EVENT";
-
-  /**
    * Like the trigger methods, sendCommand is making sure to have
    * the proper scope
    */

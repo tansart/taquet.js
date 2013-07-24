@@ -13,7 +13,11 @@
 }.call(this, function(_, $, Backbone, BubbleEvent) {
   "use strict";
 
-  var attribute = "data-cid";
+  var attribute = "data-cid",
+      /**
+       * EVENTS
+       */
+      NAVIGATE_EVENT = "TAQUET_NAVIGATE_EVENT";
   /* jshint strict: false */
   /* globals TaquetCore, BaseEvent, _ */
   var Queue = function _queue(options) {
@@ -126,24 +130,6 @@
   var _cids = {};
 
   /**
-   *
-   * @param target
-   * @param event
-   */
-  function dispatcher(target, event) {
-    // stops propagation of the event.
-    if(event[1]._stopPropagation) {
-      return;
-    }
-
-    try {
-      target.trigger.apply(target, event);
-    } catch(e) {
-      throw new Error(e);
-    }
-  }
-
-  /**
    * Helper method which iterates through the eventTree object,
    * then triggers the associated event with the appropriate scope.
    * @param eventTree Array containing the node with a
@@ -151,9 +137,24 @@
    * @private
    */
   function _eventIterator(eventTree, event) {
-    //TODO see if this is worthwhile. The idea was to avoid recursive calls
-    while(eventTree[0]){
-      _.defer(dispatcher, eventTree.shift(), event);
+    var src;
+
+    try {
+      if(event[1]._stopPropagation) {
+        return;
+      }
+    } catch(e) {
+      throw new Error("the event parameter is malformed");
+    }
+
+    src = eventTree.shift();
+
+    if(src) {
+      src.trigger.apply(src, event);
+    }
+
+    if(!!eventTree[0]) {
+      _.defer(_eventIterator, eventTree, event);
     }
   }
 
@@ -319,7 +320,7 @@
     }
 
     this.addCommand = function (type, callback) {
-      has(type).push({currentTarget:this, callback: callback});
+      has(type).push({scope:this, callback: callback});
     };
 
     this.remove = function (type) {
@@ -327,7 +328,7 @@
         console.warn(type, 'scope issue. Make sure to call exec with the right scope');
       } else if (commands && typeof commands[type] === "object") {
         for (var i = 0, l = commands[type].length; i<l; i++) {
-          if(this === commands[type][i].currentTarget) {
+          if(this === commands[type][i].scope) {
             commands[type].splice(i, 1);
             break;
           }
@@ -350,8 +351,8 @@
         for (; i<l; i++) {
           command = commands[type][i];
 
-          if(cInstanceOf || (!cInstanceOf && this !== command.currentTarget)) {
-            command.callback.apply(this, [{type:type, currentTarget:command.currentTarget}].concat([].slice.call(arguments, 1)));
+          if(cInstanceOf || (!cInstanceOf && this !== command.scope)) {
+            command.callback.apply(command.scope, [{type:type, currentTarget:this}].concat([].slice.call(arguments, 1)));
           }
         }
       }
@@ -438,11 +439,6 @@
 
     options             = options || {};
     commandManager      = new CommandManager(options.commandManagerId || this.commandManagerId || singletonID);
-
-    /**
-     * EVENTS
-     */
-    this.NAVIGATE = "NAVIGATE_EVENT";
 
     /**
      * Like the trigger methods, sendCommand is making sure to have
@@ -674,105 +670,145 @@
 
     return _backboneView.extend.call(this, props, staticProps);
   };  /* jshint strict: false */
-  /* globals Backbone, _ */
+  /* globals Backbone, _, NAVIGATE_EVENT */
+
   var AnimatedView = function(options) {
-    // BaseAnimatedView's init code
-    Backbone.View.apply(this, [options]);
-  };
 
-  _.extend(AnimatedView.prototype, Backbone.View.prototype, {
+    options = options || {};
 
-    // all the AnimatedView's methods
-    resize: function() {
-    },
+    options.commands = options.commands || [];
 
-    _onShown: function() {
-      this.trigger(this.SECTION_SHOWN, this.ID);
-    },
-
-    _onHidden: function() {
-      this.trigger(this.SECTION_HIDDEN, this.ID);
+    if(options.commands.indexOf(NAVIGATE_EVENT) < 0) {
+      options.commands.push(NAVIGATE_EVENT);
     }
-  });
 
-  AnimatedView.extend = Backbone.View.extend;  /* jshint strict: false */
-  /* globals BaseEvent, _, Backbone */
-  var BaseModel = function (options) {
+    this.route = this.route || [];
 
-    BaseEvent.apply(this);
-    // BaseAnimatedView's init code
+    if(!_.isArray(this.route)) {
+      this.route = [this.route];
+    }
 
-    Backbone.Model.apply(this, [options]);
-  };
-
-  _.extend(BaseModel.prototype, Backbone.Model.prototype);
-
-  BaseModel.extend = Backbone.Model.extend;  /* jshint strict: false */
-  /* globals BaseEvent, Queue, _, Backbone */
-  var BaseRouter = function(options) {
-    BaseEvent.apply(this);
-    // BaseAnimatedView's init code
-
-    // queue is an array containing an Event name that is to be dispatched around
-    this._queue = new Queue();
-
-    Backbone.Router.apply(this, [options]);
-
-    this.on(this.SECTION_SHOWN, this._onAnimationShownHandler, this);
-    this.on(this.SECTION_HIDDEN, this._onAnimationHiddenHandler, this);
-
-    this.commands = this.commands || [];
-    this.commands.push(this.NAVIGATE, this._queue.QUEUE_UPDATED);
-  //      this.sendCommand.on(this.NAVIGATE, this._onNavigationHandler, this);
-  //      this._eventManager.on(this._queue.QUEUE_UPDATED, this.proxy(this._proceed, this));
-  };
-
-  _.extend(BaseRouter.prototype, Backbone.Router.prototype, {
-    // all the BaseAnimatedView's methods
-    /**
-     *
-     * @param e event type
-     * @private
-     */
-    _onAnimationShownHandler: function() {
-      this._proceed();
-    },
-
-    /**
-     *
-     * @param e event type
-     * @private
-     */
-    _onAnimationHiddenHandler: function() {
-      // this._queue should not be empty.
-      if(!this._queue.isEmpty()) {
-        this._eventManager.trigger(this.SECTION_SHOW, this._queue.slice(0));
+    if(options.hasOwnProperty("route")) {
+      console.log(this.route, options.route, options.route.hasOwnProperty("slice"));
+      if(_.isArray(options.route)) {
+        [].push.apply(this.route, options.route);
       } else {
-        throw new Error("this._queue in your Router should not be empty. If on purpose override _onAnimationHiddenHandler in your Router");
+        [].push.call(this.route, options.route);
       }
-    },
-
-    _proceed: function() {
-      if(this.hasOwnProperty('_onNavigationHandler')) {
-        console.warn("The abstract _proceed() method/function was invoked");
-      }
-
-      if(!this._queue.isEmpty()) {
-        var q = this._queue.slice(0);
-        this._eventManager.trigger.apply(this._eventManager, [].concat(this.SECTION_HIDE, q));
-      }
-    },
-
-    _onNavigationHandler: function(path, options) {
-      Backbone.history.navigate(path, options);
-    },
-
-    onCommandHandler: function() {
-      console.log("onCommand handler", arguments);
     }
-  });
 
-  BaseRouter.extend = Backbone.Router.extend;
+    Backbone.View.call(this, options);
+  };
+
+  _.extend(AnimatedView.prototype, Backbone.View.prototype);
+
+  AnimatedView.prototype.initialize = function() {
+    console.log("AnimatedView initialized", this);
+    if(this.hasOwnProperty("route")) {
+      this.sendCommand(NAVIGATE_EVENT, this.route);
+    }
+  };
+
+  AnimatedView.prototype.commandHandler = function(command) {
+    switch(command.type) {
+
+    case NAVIGATE_EVENT:
+      var args = [].slice.call(arguments, 1);
+      if(args[0] === this) {
+        this.show(args[1]);
+        return;
+      }
+      break;
+
+    }
+  };
+
+  AnimatedView.prototype.show = function() {
+
+  };
+
+  AnimatedView.prototype.hide = function() {
+
+  };
+
+  AnimatedView.extend = function(props, staticProps) {
+
+    if(props.hasOwnProperty("initialize")) {
+      console.log("initialize overwritten");
+    }
+
+    if(props.hasOwnProperty("route")) {
+      console.log(props.route);
+    }
+
+    return Backbone.View.extend.call(this, props, staticProps);
+  };  /* jshint strict: false */
+  /* globals BaseEvent, Backbone */
+  var _model = Backbone.Model;
+
+  Backbone.Model = function (options) {
+
+    BaseEvent.apply(this);
+
+    return _model.call(this, options);
+  };
+
+  Backbone.Model.extend = _model.extend;  /* jshint strict: false, loopfunc: true */
+  /* globals _, Backbone, BaseEvent, NAVIGATE_EVENT */
+  var _router = Backbone.Router;
+
+  Backbone.Router = function (options) {
+
+    options = options || {};
+
+    options.commands = options.commands || [];
+
+    if(options.commands.indexOf(NAVIGATE_EVENT) < 0) {
+      options.commands.push(NAVIGATE_EVENT);
+    }
+
+    BaseEvent.call(this, options);
+
+    return _router.call(this, options);
+  };
+
+  _.extend(Backbone.Router.prototype, _router.prototype);
+
+  Backbone.Router.prototype.commandHandler = function(command) {
+
+    if(command) {
+      switch(command.type) {
+
+      case NAVIGATE_EVENT:
+        var i, l, route = [].slice.call(arguments[1]);
+        for(i = 0, l = route.length; i<l; i++) {
+          this.route(route[i], "animatedView", (function(route) {
+            return function() {
+              this.sendCommand(NAVIGATE_EVENT, command.currentTarget, route);
+              console.error(this, command.currentTarget, route);
+            };
+          }( route[i])) );
+        }
+        break;
+
+      }
+    }
+  };
+
+  Backbone.Router.extend = function(props, staticProps) {
+
+    if(props.hasOwnProperty("commandHandler")) {
+
+      var commandHandler = props.commandHandler;
+      props.commandHandler = function() {
+
+        return commandHandler.call(this, arguments);
+      };
+
+    }
+
+    return _router.extend.call(this, props, staticProps);
+  };
   var Taquet;
   
   Taquet = {

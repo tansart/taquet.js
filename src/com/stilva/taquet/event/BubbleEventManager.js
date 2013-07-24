@@ -13,24 +13,6 @@
 var _cids = {};
 
 /**
- *
- * @param target
- * @param event
- */
-function dispatcher(target, event) {
-  // stops propagation of the event.
-  if(event[1]._stopPropagation) {
-    return;
-  }
-
-  try {
-    target.trigger.apply(target, event);
-  } catch(e) {
-    throw new Error(e);
-  }
-}
-
-/**
  * Helper method which iterates through the eventTree object,
  * then triggers the associated event with the appropriate scope.
  * @param eventTree Array containing the node with a
@@ -38,9 +20,24 @@ function dispatcher(target, event) {
  * @private
  */
 function _eventIterator(eventTree, event) {
-  //TODO see if this is worthwhile. The idea was to avoid recursive calls
-  while(eventTree[0]){
-    _.defer(dispatcher, eventTree.shift(), event);
+  var src;
+
+  try {
+    if(event[1]._stopPropagation) {
+      return;
+    }
+  } catch(e) {
+    throw new Error("the event parameter is malformed");
+  }
+
+  src = eventTree.shift();
+
+  if(src) {
+    src.trigger.apply(src, event);
+  }
+
+  if(!!eventTree[0]) {
+    _.defer(_eventIterator, eventTree, event);
   }
 }
 
