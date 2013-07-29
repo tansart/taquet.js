@@ -3,7 +3,7 @@ node_js:
   - "0.8"
   - "0.10"
 before_install:
-  - npm install yeoman
+  - npm install -g yeoman
 before_script:
   - npm install
   - npm run-script pre-test
