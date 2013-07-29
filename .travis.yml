@@ -5,5 +5,8 @@ node_js:
 branches:
   only:
     - alpha
+before_install:
+  - npm install yeoman
 before_script:
   - npm install
+  - npm run-script pre-test
