@@ -26,7 +26,7 @@
   },
   "scripts": {
     "pre-test": "yo taquet",
-    "test": ""
+    "test": "grunt travis"
   },
   "repository": {
     "type": "git",
