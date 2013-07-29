@@ -4,11 +4,13 @@
   "version": "0.0.1",
   "homepage": "http://taquet.stilva.com",
   "keywords": [
-    "backbone",
+    "Backbone.js",
     "events bubbling",
-    "commands"
+    "commands",
+    "removes nested views",
+    "auto show & hide views"
   ],
-  "author": "Thomas.A",
+  "author": "Thomas A.",
   "main": "main",
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -23,10 +25,8 @@
     "generator-taquet": "~0.0.0-a"
   },
   "scripts": {
-    "start": "node ./bin/http-server",
-    "test": "vows --spec --isolate",
-    "predeploy": "echo This will be run before deploying the app",
-    "postdeploy": "echo This will be run after deploying the app"
+    "pre-test": "yo taquet",
+    "test": ""
   },
   "repository": {
     "type": "git",

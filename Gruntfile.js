@@ -123,5 +123,6 @@ module.exports = function(grunt) {
   grunt.registerTask('testAll', ['watch:testAll']);
   grunt.registerTask('specs', ['compile', 'connect', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
+  grunt.registerTask('travis', ['compile', 'connect', 'qunit', 'jasmine']);
 
 };
