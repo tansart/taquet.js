@@ -2,11 +2,13 @@
 /* globals BaseEvent, Backbone */
 var _model = Backbone.Model;
 
-Backbone.Model = function (options) {
+Backbone.Model = function(attributes, options) {
 
   BaseEvent.apply(this);
 
-  return _model.call(this, options);
+  return _model.call(this, attributes, options);
 };
+
+Backbone.Model.prototype = _model.prototype;
 
 Backbone.Model.extend = _model.extend;

@@ -1,13 +1,14 @@
 /* jshint strict: false */
-/* globals BaseEvent, _, Backbone */
-var BaseModel = function (options) {
+/* globals BaseEvent, Backbone */
+var _collection = Backbone.Collection;
+
+Backbone.Collection = function(models, options) {
 
   BaseEvent.apply(this);
-  // BaseAnimatedView's init code
 
-  Backbone.Model.apply(this, [options]);
+  return _collection.call(this, models, options);
 };
 
-_.extend(BaseModel.prototype, Backbone.Model.prototype);
+Backbone.Collection.prototype = _collection.prototype;
 
-BaseModel.extend = Backbone.Model.extend;
+Backbone.Collection.extend = _collection.extend;

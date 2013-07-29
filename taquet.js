@@ -18,6 +18,8 @@
        * EVENTS
        */
       NAVIGATE_EVENT = "TAQUET_NAVIGATE_EVENT";
+
+
   /* jshint strict: false */
   /* globals TaquetCore, BaseEvent, _ */
   var Queue = function _queue(options) {
@@ -115,6 +117,13 @@
         };
       }
     }
+  };  /* jshint strict: false */
+  /* globals Backbone */
+  var _checkUrl = Backbone.History.prototype.checkUrl;
+
+  Backbone.History.prototype.checkUrl = function() {
+    console.log("checkUrl!");
+    return _checkUrl.call(Backbone.history);
   };  /* jshint strict: false */
   /* exported BubbleEventManager */
   /* globals _, OriginValidator, attribute */
@@ -463,21 +472,33 @@
         commandManager.addCommand.call(this, this.commands[i], this.commandHandler);
       }
     }
-  };  /* globals BaseEvent, TaquetCore, _, Backbone */
-  /* jshint strict: false */
-  var BaseApplication = function() {
+  };  /* jshint strict: false */
+  /* globals BaseEvent, Backbone */
+  var _model = Backbone.Model;
+
+  Backbone.Model = function(attributes, options) {
 
     BaseEvent.apply(this);
 
-    this.initialize.apply(this);
-
-    this.$window.trigger(TaquetCore.RESIZE_EVENT);
+    return _model.call(this, attributes, options);
   };
 
-  _.extend(BaseApplication.prototype, TaquetCore);
-  _.extend(BaseApplication.prototype, Backbone.Events);
+  Backbone.Model.prototype = _model.prototype;
 
-  BaseApplication.extend = Backbone.View.extend;  /* jshint strict: false */
+  Backbone.Model.extend = _model.extend;  /* jshint strict: false */
+  /* globals BaseEvent, Backbone */
+  var _collection = Backbone.Collection;
+
+  Backbone.Collection = function(models, options) {
+
+    BaseEvent.apply(this);
+
+    return _collection.call(this, models, options);
+  };
+
+  Backbone.Collection.prototype = _collection.prototype;
+
+  Backbone.Collection.extend = _collection.extend;  /* jshint strict: false */
   /* globals Backbone, _, TaquetCore, BaseEvent, BubbleEvent, BubbleEventManager, attribute */
   var _backboneView = Backbone.View,
       _bubbleEventsManager = new BubbleEventManager(),
@@ -715,6 +736,8 @@
     case NAVIGATE_EVENT:
       var args = [].slice.call(arguments, 1);
       if(args[0] === this) {
+        console.log(">>>", args[1]);
+
         this.show(args[1]);
         return;
       }
@@ -742,18 +765,7 @@
     }
 
     return Backbone.View.extend.call(this, props, staticProps);
-  };  /* jshint strict: false */
-  /* globals BaseEvent, Backbone */
-  var _model = Backbone.Model;
-
-  Backbone.Model = function (options) {
-
-    BaseEvent.apply(this);
-
-    return _model.call(this, options);
-  };
-
-  Backbone.Model.extend = _model.extend;  /* jshint strict: false, loopfunc: true */
+  };  /* jshint strict: false, loopfunc: true */
   /* globals _, Backbone, BaseEvent, NAVIGATE_EVENT */
   var _router = Backbone.Router;
 
@@ -772,7 +784,7 @@
     return _router.call(this, options);
   };
 
-  _.extend(Backbone.Router.prototype, _router.prototype);
+  Backbone.Router.prototype = _router.prototype;
 
   Backbone.Router.prototype.commandHandler = function(command) {
 
@@ -782,10 +794,12 @@
       case NAVIGATE_EVENT:
         var i, l, route = [].slice.call(arguments[1]);
         for(i = 0, l = route.length; i<l; i++) {
-          this.route(route[i], "animatedView", (function(route) {
+          this.route(route[i], "animatedView", (function(path) {
             return function() {
-              this.sendCommand(NAVIGATE_EVENT, command.currentTarget, route);
-              console.error(this, command.currentTarget, route);
+              //this being the router
+              //command.currentTarget being the caller
+              //path is the path that matched
+              this.sendCommand(NAVIGATE_EVENT, command.currentTarget, path);
             };
           }( route[i])) );
         }
@@ -808,7 +822,21 @@
     }
 
     return _router.extend.call(this, props, staticProps);
+  };  /* globals BaseEvent, TaquetCore, _, Backbone */
+  /* jshint strict: false */
+  var BaseApplication = function() {
+
+    BaseEvent.apply(this);
+
+    this.initialize.apply(this);
+
+    this.$window.trigger(TaquetCore.RESIZE_EVENT);
   };
+
+  _.extend(BaseApplication.prototype, TaquetCore);
+  _.extend(BaseApplication.prototype, Backbone.Events);
+
+  BaseApplication.extend = Backbone.View.extend;
   var Taquet;
   
   Taquet = {

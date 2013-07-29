@@ -5,15 +5,17 @@ module.exports = function(grunt) {
     mFiles = [
       'src/com/stilva/util/Queue.js',
       'src/com/stilva/taquet/util/TaquetCore.js',
+      'src/com/stilva/taquet/history/History.js',
       'src/com/stilva/taquet/event/BubbleEventManager.js',
       'src/com/stilva/taquet/event/CommandManager.js',
       'src/com/stilva/taquet/event/CommandQueue.js',
       'src/com/stilva/taquet/event/BaseEvent.js',
-      'src/com/stilva/taquet/application/BaseApplication.js',
+      'src/com/stilva/taquet/model/Model.js',
+      'src/com/stilva/taquet/collection/Collection.js',
       'src/com/stilva/taquet/view/View.js',
       'src/com/stilva/taquet/view/AnimatedView.js',
-      'src/com/stilva/taquet/model/Model.js',
-      'src/com/stilva/taquet/router/Router.js'
+      'src/com/stilva/taquet/router/Router.js',
+      'src/com/stilva/taquet/application/BaseApplication.js'
     ];
 
   grunt.initConfig({
@@ -73,7 +75,7 @@ module.exports = function(grunt) {
       all: {
         options: {
           urls: [
-            'http://localhost:8000/test/com/backbone/index.html'
+            'http://127.0.0.1:<%= connect.test.port %>/test/com/backbone/index.html'
           ]
         }
       }
@@ -88,7 +90,11 @@ module.exports = function(grunt) {
     watch: {
       scripts: {
         files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
-        tasks: ['compile', 'connect'/*, 'qunit'*/, 'jasmine']
+        tasks: ['compile', 'connect', 'jasmine']
+      },
+      testAll: {
+        files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
+        tasks: ['compile', 'connect', 'qunit', 'jasmine']
       },
       compile: {
         files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
@@ -114,6 +120,7 @@ module.exports = function(grunt) {
   grunt.registerTask('compile', ['concat', 'jshint']);
 //  grunt.registerTask('test', ['compile', 'connect', 'qunit', 'jasmine']);
   grunt.registerTask('test', ['watch:scripts']);
+  grunt.registerTask('testAll', ['watch:testAll']);
   grunt.registerTask('specs', ['compile', 'connect', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
 

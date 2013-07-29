@@ -44,6 +44,8 @@ AnimatedView.prototype.commandHandler = function(command) {
   case NAVIGATE_EVENT:
     var args = [].slice.call(arguments, 1);
     if(args[0] === this) {
+      console.log(">>>", args[1]);
+
       this.show(args[1]);
       return;
     }

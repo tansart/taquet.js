@@ -17,7 +17,7 @@ Backbone.Router = function (options) {
   return _router.call(this, options);
 };
 
-_.extend(Backbone.Router.prototype, _router.prototype);
+Backbone.Router.prototype = _router.prototype;
 
 Backbone.Router.prototype.commandHandler = function(command) {
 
@@ -27,10 +27,12 @@ Backbone.Router.prototype.commandHandler = function(command) {
     case NAVIGATE_EVENT:
       var i, l, route = [].slice.call(arguments[1]);
       for(i = 0, l = route.length; i<l; i++) {
-        this.route(route[i], "animatedView", (function(route) {
+        this.route(route[i], "animatedView", (function(path) {
           return function() {
-            this.sendCommand(NAVIGATE_EVENT, command.currentTarget, route);
-            console.error(this, command.currentTarget, route);
+            //this being the router
+            //command.currentTarget being the caller
+            //path is the path that matched
+            this.sendCommand(NAVIGATE_EVENT, command.currentTarget, path);
           };
         }( route[i])) );
       }
