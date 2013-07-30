@@ -66,9 +66,12 @@ function moveFiles() {
   }
 
   copyBackboneTestFiles();
-
   // Start the prompt
   prompt.start();
+
+  //mainly for Travis. By default, it won't delete the bower_components directory
+  setTimeout(prompt.pause, 10000);
+
   prompt.get([
 
     {
