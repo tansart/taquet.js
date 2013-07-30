@@ -1,0 +1,31 @@
+{
+  "bitwise":"true",
+  "camelcase":"true",
+  "curly":"true",
+  "eqeqeq":"true",
+  "forin":"true",
+  "immed":"true",
+  "latedef":"true",
+  "newcap":"true",
+  "noarg":"true",
+  "noempty":"true",
+  "nonew":"true",
+  "regexp":"true",
+  "undef":"true",
+  "unused":"true",
+  "strict":"true",
+  "trailing":"true",
+  "boss":"true",
+  "debug":"true",
+  "browser":"true",
+  "node":"true",
+  "globals": {
+    "define":"false",
+    "require":"false",
+    "requirejs":"false",
+    "describe":"false",
+    "it":"false",
+    "expect":"false",
+    "beforeEach": "false"
+  }
+}
