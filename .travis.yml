@@ -6,7 +6,7 @@ branches:
   only:
     - alpha
 before_install:
-  - npm install yeoman
+  - npm install grunt-cli
 before_script:
   - npm install
-  - npm run-script pre-test
+  - npm run-script test
