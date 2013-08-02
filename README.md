@@ -1,6 +1,8 @@
-# taquet [![Build Status](https://travis-ci.org/stilva/taquet.js.png?branch=alpha)](https://travis-ci.org/stilva/taquet.js)
+![taquet.js](http://com-stilva.appspot.com/projects/taquetjs/logo.png)
 
-taquet extends Backbone.js and adds the following features:
+[![Build Status](https://travis-ci.org/stilva/taquet.js.png?branch=alpha)](https://travis-ci.org/stilva/taquet.js)
+
+taquet.js extends Backbone.js and adds the following features:
 
 - A platform wide commands system
 - bubbling events
