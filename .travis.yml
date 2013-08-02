@@ -1,12 +1,13 @@
 language: node_js
 node_js:
-  - "0.8"
   - "0.10"
+  - "0.8"
 branches:
   only:
     - alpha
 before_install:
-  - npm install grunt-cli
+  - npm install grunt-cli -g
+  - npm install abbrev
 before_script:
   - npm install
   - npm run-script test
