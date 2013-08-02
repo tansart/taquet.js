@@ -1,4 +1,4 @@
-# taquet
+# taquet [![Build Status](https://travis-ci.org/stilva/taquet.js.png?branch=alpha)](https://travis-ci.org/stilva/taquet.js)
 
 taquet extends Backbone.js and adds the following features:
 
@@ -12,7 +12,6 @@ taquet extends Backbone.js and adds the following features:
 #Table of Contents
 - [Dependencies](#dependencies)
 - [Development prerequisits](#development-prerequisits)
-	- [Installing taquet](#installing-taquet)
 - [Usage](#usage)
 	- [View](#view)
 		- [Commands](#commands)
@@ -30,28 +29,15 @@ taquet extends Backbone.js and adds the following features:
 ## Dependencies
 
 * backbone.js [which in turn requires underscore/lodash, and jQuery/Zepto]
-* require.js
-* setImmediage.js _Might be replaced by lodash's defer()..._
 
 If you follow the instructions each dependency will be fetched for you using Bower.
 
 ## Development prerequisits
 
 * node.js must be installed
-* yo [npm -g install yo]
-* taquet-generator [`npm install generator-taquet`]
-
-### Installing taquet
-
-1. `cd path/to/taquet`
-2. `npm install`
-3. `yo taquet` __This needs to be ran from the proper directory i.e__ `path/to/taquet`
+* npm install
 
 ## Usage
-
-_Refer to [taquet-generator](https://github.com/stilva/taquet-generator) and  [yeoman](http://yeoman.io/) for more details._
-
-I recommend the use of the aforementioned yeoman generator, as it will create and extend the Views for you.
 
 ###View
 
@@ -63,8 +49,8 @@ _Note that Commands are synchronous while Events are asynchronous_
 ####Commands
 There are two ways to register commands:
 
-1. Specifying the commands when extending BaseView.
-2. Passing the commands via the contstructor.
+1. Specifying the commands when extending the View.
+2. Passing the commands when instantiating the View.
 
 ```js
 var CustomView = Backbone.View.extend({
@@ -91,6 +77,9 @@ new CustomView({commands:[Commands.SHUT_DOWN]}); // 2
 `this.sendCommand(command, args)` can be invoked from any class that extends `BaseEvent`.
 
 ####Command Object
+
+_This is the command object that is passed throught the `commandHandler`.
+
 ```js
 {
 	type: "", //command's type.
