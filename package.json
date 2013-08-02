@@ -27,7 +27,6 @@
     "grunt-contrib-connect": "~0.3.0"
   },
   "scripts": {
-    "install": "node bower.js",
     "test": "grunt travis"
   },
   "repository": {

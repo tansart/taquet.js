@@ -7,9 +7,7 @@ branches:
     - alpha
 before_install:
   - npm install grunt-cli -g
-  - npm install abbrev
 before_script:
-  - npm install
-  - npm run-script test
+  - node bower.js
 notifications:
   email: false
