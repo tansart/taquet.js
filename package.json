@@ -24,7 +24,8 @@
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-jasmine": "~0.5.1",
-    "grunt-contrib-connect": "~0.3.0"
+    "grunt-contrib-connect": "~0.3.0",
+    "grunt-template-jasmine-templates": "~0.0.0-c"
   },
   "scripts": {
     "test": "grunt travis"

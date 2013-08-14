@@ -13,7 +13,7 @@ module.exports = function(grunt) {
       'src/com/stilva/taquet/model/Model.js',
       'src/com/stilva/taquet/collection/Collection.js',
       'src/com/stilva/taquet/view/View.js',
-      'src/com/stilva/taquet/view/AnimatedView.js',
+      'src/com/stilva/taquet/view/RoutedView.js',
       'src/com/stilva/taquet/router/Router.js',
       'src/com/stilva/taquet/application/BaseApplication.js'
     ];
@@ -32,8 +32,7 @@ module.exports = function(grunt) {
         banner: (fs.readFileSync('./src/out/banner.tmpl').toString()),
         footer: (fs.readFileSync('./src/out/footer.tmpl').toString()),
         separator: '\r',
-        process: function(src, filepath) {
-//          return '// Source: ' + filepath + '\n' +
+        process: function(src) {
           return src.replace(/^.|\r./mg, function(match) {
               return "  "+match;
             });
@@ -66,7 +65,12 @@ module.exports = function(grunt) {
         options: {
           keepRunner: true,
           specs: 'test/com/stilva/taquet/*Spec.js',
-          host: 'http://127.0.0.1:<%= connect.test.port %>/'
+          host: 'http://127.0.0.1:<%= connect.test.port %>/',
+          template: require('grunt-template-jasmine-templates'),
+          templateOptions: {
+            vendor: ["src/vendor/lodash.js"],
+            template: 'test/com/stilva/**/*.tmpl'
+          }
         }
       }
     },

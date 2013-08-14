@@ -5,27 +5,24 @@
 taquet.js extends Backbone.js and adds the following features:
 
 - A platform wide commands system
-- bubbling events
-- Views with a lifecycle
-- synchronous events for animations
-- ~~double/two-way binding~~ _Testing_
+- bubbling events up & down the hierarchy
+- `Views` with a lifecycle
+- `RoutedViews` automatically attach themselves to the Router
 - Helpul utilities
 
 #Table of Contents
 - [Dependencies](#dependencies)
 - [Development prerequisits](#development-prerequisits)
 - [Usage](#usage)
-	- [View](#view)
-		- [Commands](#commands)
-		- [Command Object](#command-object)
-		- [Bubbling Events](#bubbling-events)
-		- [BubbleEvent](#bubbleevent)
-	- [AnimatedView](#animatedview)
-	- [BaseApplication](#baseapplication)
-	- [BaseRouter](#baserouter)
-	- [Utilities](#utilities)
-		- [Proxy](#proxy)
-		- [Webfont preloader](#webfont-preloader)
+  - [View](#view)
+    - [Commands](#commands)
+    - [Command Object](#command-object)
+    - [Bubbling Events](#bubbling-events)
+    - [BubbleEvent](#bubbleevent)
+  - [RoutedView](#routedview)
+  - [Utilities](#utilities)
+    - [Proxy](#proxy)
+    - [Webfont preloader](#webfont-preloader)
 - [Testing](#testing)
 
 ## Dependencies
@@ -80,12 +77,12 @@ new CustomView({commands:[Commands.SHUT_DOWN]}); // 2
 
 ####Command Object
 
-_This is the command object that is passed throught the `commandHandler`.
+_This is the command object that is passed through to the `commandHandler`.
 
 ```js
 {
-	type: "", //command's type.
-	currentTarget: {} //the object that initiated the command.
+  type: "", //command's type.
+  currentTarget: {} //the object that initiated the command.
 }
 ```
 
@@ -114,15 +111,17 @@ where `event` is the BubbleEvent object, and the rest are arguments passed throu
 var event = new BubbleEvent("CUSTOM_EVENT");
 ```
 
-By calling `event.stopPropagation()` an event can be stopped from bubbling up the even hierarchy.
+By calling `event.stopPropagation()` an event can be stopped from bubbling up or down the event hierarchy.
 
 An event could also be uncancellable by setting the cancellable flag to false.
 
 ```js
 var event = new BubbleEvent("CUSTOM_EVENT", false);
 ```
-###AnimatedView
-requires the `Router` to extend from `BaseRouter`
+
+###RoutedView
+
+Any View extending from this View can automatically attach itself to the router.
 
 ###BaseApplication
 This is not a View, and that is all it is. _for now_
@@ -130,23 +129,25 @@ This is not a View, and that is all it is. _for now_
 ###BaseModule
 This is not a View, and that is all it is. _for now_
 
-###BaseRouter
-It does not do much, but is needed if you use `AnimatedView`.
-
 ###Utilities
 ####Proxy
 
 Helper method that allows you to specify the scope within which a callback will run.
 
+The following code allows for `fn` to run with `context` as its context.
+`args` is optional, and is passed to `fn`.
+
 ```js
-this.proxy(fn, context, args)
+var adjusted = this.proxy(fn, context, args);
 ```
 
 ####Webfont preloader
 
-This does not preload as much as ensure a given front to be loaded, before sending a command system wide.
+This does not preload as much as ensure a given front to be loaded.
+Once a given font has been properly loaded this utility send a system wide command.
 
-## Testing
+##Testing
+
 _Refer to [taquet-generator](https://github.com/stilva/taquet-generator), [yeoman](http://yeoman.io/), and [grunt](http://www.gruntjs.com) for more details._
 
 1. If the Views are created using taquet-generator a *Spec.js file will automatically be created in `path/to/test`
