@@ -18,12 +18,13 @@ BaseEvent = function(options) {
 
   this.commands       = this.commands || [];
 
-  /* type checking to reduce the risk of errors */
+  // type checking to reduce the risk of errors
   if(typeof this.commands === "string") {
     this.commands = [this.commands];
   }
 
-  if(options.hasOwnProperty("commands") && typeof this.commands.concat === "function") {
+  // 
+  if(("commands" in options) && _.isArray(this.commands)) {
     this.commands = _.union(this.commands, options.commands);
   }
 

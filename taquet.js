@@ -19,69 +19,7 @@
        */
       NAVIGATE_EVENT = "TAQUET_NAVIGATE_EVENT";
 
-
   /* jshint strict: false */
-  /* globals TaquetCore, BaseEvent, _ */
-  var Queue = function _queue(options) {
-    var self = this;
-
-    BaseEvent.apply(this);
-
-    this.QUEUE_UPDATED  = 'QUEUE_UPDATED_EVENT';
-
-    // Let's not iterate through an object with `this.proxy`
-    _.each(options, function(item, key){
-      self[key] = item;
-    });
-
-    this.proxy = TaquetCore.proxy;
-  };
-
-  if(!Queue.hasOwnProperty("length")) {
-    Queue.length = 0;
-  }
-
-  (function(){
-    var i = 0,
-        l = 0,
-        methods = ['push', 'pop', 'shift', 'unshift', 'slice', 'splice', 'join'];
-    for(l=methods.length;i<l;i++) {
-      /* jshint loopfunc : true */
-      (function(method){
-        Queue.prototype[method] = function() {
-          return [][method].apply(this, arguments);
-        };
-      }(methods[i]));
-    }
-
-  }());
-
-  _.extend(Queue.prototype, {
-    push: function() {
-      return [].push.apply(this, arguments);
-    },
-
-    set: function(array) {
-      var item;
-      this.clear();
-
-      while(item = array.shift()) {
-        this.push(item);
-      }
-
-      this.sendCommand(this.QUEUE_UPDATED);
-    },
-
-    clear: function() {
-      do {
-        this.pop();
-      } while(this.length>0);
-    },
-
-    isEmpty: function() {
-      return this.length === 0;
-    }
-  });  /* jshint strict: false */
   /* globals $ */
   var TaquetCore,
       $window = $(window),
@@ -119,10 +57,18 @@
     }
   };  /* jshint strict: false */
   /* globals Backbone */
+
+  var old = Backbone.History;
+  Backbone.History = function (){
+    console.log(">>> History instanciating!");
+    old.call(this);
+  };
+  Backbone.History.prototype = old.prototype;
+
   var _checkUrl = Backbone.History.prototype.checkUrl;
 
   Backbone.History.prototype.checkUrl = function() {
-    console.log("checkUrl!");
+    console.log("checkUrl!", Backbone.history.getFragment());
     return _checkUrl.call(Backbone.history);
   };  /* jshint strict: false */
   /* exported BubbleEventManager */
@@ -458,12 +404,13 @@
 
     this.commands       = this.commands || [];
 
-    /* type checking to reduce the risk of errors */
+    // type checking to reduce the risk of errors
     if(typeof this.commands === "string") {
       this.commands = [this.commands];
     }
 
-    if(options.hasOwnProperty("commands") && typeof this.commands.concat === "function") {
+    // 
+    if(("commands" in options) && _.isArray(this.commands)) {
       this.commands = _.union(this.commands, options.commands);
     }
 
@@ -693,24 +640,30 @@
   };  /* jshint strict: false */
   /* globals Backbone, _, NAVIGATE_EVENT */
 
-  var AnimatedView = function(options) {
+  /**
+   *
+   * @param options
+   * @constructor
+   */
+  var RoutedView = function(options) {
 
     options = options || {};
 
     options.commands = options.commands || [];
 
+    //NAVIGATE_EVENT command will help with the loose coupling of Router <-> View
+    //making sure we don't double the NAVIGATE_EVENT commands
     if(options.commands.indexOf(NAVIGATE_EVENT) < 0) {
       options.commands.push(NAVIGATE_EVENT);
     }
 
     this.route = this.route || [];
-
+    //Strings, Arrays are both acceptable inputs
     if(!_.isArray(this.route)) {
       this.route = [this.route];
     }
 
     if(options.hasOwnProperty("route")) {
-      console.log(this.route, options.route, options.route.hasOwnProperty("slice"));
       if(_.isArray(options.route)) {
         [].push.apply(this.route, options.route);
       } else {
@@ -721,23 +674,22 @@
     Backbone.View.call(this, options);
   };
 
-  _.extend(AnimatedView.prototype, Backbone.View.prototype);
+  _.extend(RoutedView.prototype, Backbone.View.prototype);
 
-  AnimatedView.prototype.initialize = function() {
-    console.log("AnimatedView initialized", this);
+  RoutedView.prototype.initialize = function() {
+    console.log("RoutedView initialized", this);
     if(this.hasOwnProperty("route")) {
       this.sendCommand(NAVIGATE_EVENT, this.route);
     }
   };
 
-  AnimatedView.prototype.commandHandler = function(command) {
+  RoutedView.prototype.commandHandler = function(command) {
     switch(command.type) {
 
     case NAVIGATE_EVENT:
       var args = [].slice.call(arguments, 1);
       if(args[0] === this) {
-        console.log(">>>", args[1]);
-
+        console.log(">>>", args);
         this.show(args[1]);
         return;
       }
@@ -746,15 +698,15 @@
     }
   };
 
-  AnimatedView.prototype.show = function() {
+  RoutedView.prototype.show = function() {
 
   };
 
-  AnimatedView.prototype.hide = function() {
+  RoutedView.prototype.hide = function() {
 
   };
 
-  AnimatedView.extend = function(props, staticProps) {
+  RoutedView.extend = function(props, staticProps) {
 
     if(props.hasOwnProperty("initialize")) {
       console.log("initialize overwritten");
@@ -841,7 +793,7 @@
   
   Taquet = {
     CommandManager: CommandManager,
-    AnimatedView: AnimatedView
+    RoutedView: RoutedView
   };
 
   return Taquet;

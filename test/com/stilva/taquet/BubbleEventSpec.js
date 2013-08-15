@@ -1,10 +1,19 @@
 /* globals $, Backbone, BubbleEvent */
 
+// We rely on jQuery & DOM in some of the test
 $(function(){
   "use strict";
 
   describe("BubbleEventSpec", function() {
 
+    /**
+     * Short-hand for appending DOM elements. Should the parent node not
+     * be provided, the function simply returns the newly constructed element.
+     * @param tagName String representing the type of the node
+     * @param id String ID of the given DOM element
+     * @param parent Optional Parent node to which we want to append the node
+     * @returns {HTMLElement} Reference of the newly appended element
+     */
     function appendElement(tagName, id, parent) {
 
       if(!tagName) {
@@ -23,8 +32,28 @@ $(function(){
       return el;
     }
 
+    /**
+     * returns the node with the given ID
+     * @param id of the node we're looking for
+     * @returns {HTMLElement} If matched, null otherwise
+     */
+    function get(id) {
+      return document.getElementById(id);
+    }
+
+    /**
+     * returns the first node with the given Tag
+     * @param parent within which we'd like to search
+     * @param tag of the node we're looking for
+     * @returns {HTMLElement} If matched, null otherwise
+     */
+    function firstTag(parent, tag) {
+      return parent.getElementsByTagName(tag)[0];
+    }
+
+    // I'm just declaring everything up-top as per JSLint...
     var element,
-        wrapper = appendElement('div', "bubbleEventManager"),
+        wrapper,
 
         HeaderView, ArticleView,
 
@@ -32,43 +61,65 @@ $(function(){
         baseViewOne, baseViewTwo, baseViewThree, baseViewFour,
         articleView, menuView, headerView, asideView, navView;
 
-    HeaderView = Backbone.View.extend({
-      tagName : "header",
-      render: function() {
+    /*
+      The following represents the HTML structure.
 
-        this.el.appendChild(document.createTextNode("This is a header"));
+      <div id="bubbleEventManager">
+        <nav>
+          <a id="anchor-one" href="#section-one"></a>
+          <a id="anchor-two" href="#section-two"></a>
+          <a id="anchor-three" href="#section-three"></a>
+          <a id="anchor-four" href="#section-four"></a>
+        </nav>
+        <header>This is a header</header>
+        <article id="container-article">
+          <section id="section-one"></section>
+          <section id="section-two"></section>
+          <section id="section-three"></section>
+          <section id="section-four"></section>
+        </article>
+      </div>
+     */
 
-        return this;
-      }
-    });
-
-    ArticleView = Backbone.View.extend({
-      tagName : "article",
-      render: function() {
-
-        baseViewOne   = new Backbone.View({el:appendElement('section', "section-one", this.el)});
-        baseViewTwo   = new Backbone.View({el:appendElement('section', "section-two", this.el)});
-        baseViewThree = new Backbone.View({el:appendElement('section', "section-three", this.el)});
-        baseViewFour  = new Backbone.View({el:appendElement('section', "section-four", this.el)});
-
-        return this;
-      }
-    });
-
+    /* globals _ */
+    wrapper = document.createElement("div");
+    wrapper.innerHTML = _.template(document.getElementById("BubbleEvent_tmpl").innerHTML)();
+    wrapper = wrapper.children[0];
+    // Let's append the wrapper to the body here,
     document.body.appendChild(wrapper);
+
+    // View attaching itself to the Header tag
+    HeaderView = Backbone.View.extend({
+      render: function() {
+        return this;
+      }
+    });
+
+    // View attaching itself to the Article tag
+    ArticleView = Backbone.View.extend({
+      render: function() {
+
+        // Let's append nested section tags within this article View.
+        baseViewOne   = new Backbone.View({el:get("section-one")});
+        baseViewTwo   = new Backbone.View({el:get("section-two")});
+        baseViewThree = new Backbone.View({el:get("section-three")});
+        baseViewFour  = new Backbone.View({el:get("section-four")});
+
+        return this;
+      }
+    });
+
+    // wrapperView is attached to the wrapper Node
     wrapperView = new Backbone.View({el:wrapper});
 
+    // This is where we fill <nav> with all the anchords
     menuView = new Backbone.View();
-    menuView.setElement(appendElement('nav'));
-    appendElement('a', "anchor-one", menuView.el).setAttribute("href", "#section-one");
-    appendElement('a', "anchor-two", menuView.el).setAttribute("href", "#section-two");
-    appendElement('a', "anchor-three", menuView.el).setAttribute("href", "#section-three");
-    appendElement('a', "anchor-four", menuView.el).setAttribute("href", "#section-four");
+    menuView.setElement(firstTag(wrapper, 'nav'));
     wrapper.appendChild(menuView.el);
 
     navView = new Backbone.View({el: menuView.el});
 
-    headerView = new HeaderView();
+    headerView = new HeaderView({el:firstTag(wrapper, "header")});
     wrapper.appendChild(headerView.render().el);
 
     element = appendElement('aside');
@@ -76,7 +127,7 @@ $(function(){
     wrapper.appendChild(element);
     asideView = new Backbone.View({el:element});
 
-    articleView = new ArticleView().render();
+    articleView = new ArticleView({el:firstTag(wrapper, "article")}).render();
     wrapper.appendChild(articleView.el);
 
     var ul = appendElement("ul");
@@ -84,59 +135,23 @@ $(function(){
     deeplyNestedView = new Backbone.View({el:ul});
     baseViewFour.el.appendChild(deeplyNestedView.el);
 
-    describe("The DOM", function() {
-
-      it("has all the elements that were created", function() {
-        expect(wrapper.id).toBe("bubbleEventManager");
-        expect(wrapper.getElementsByTagName("header").length).toBe(1);
-        expect(wrapper.getElementsByTagName("aside").length).toBe(1);
-        expect(wrapper.getElementsByTagName("article").length).toBe(1);
-
-        expect(wrapper.getElementsByTagName("a").length).toBe(4);
-        expect(wrapper.getElementsByTagName("section").length).toBe(4);
-      });
-
-      it("has the correct structure", function() {
-        // nav
-        element = wrapper.childNodes[0];
-        expect(element.childNodes.length).toBe(4);
-        expect(element.nodeName).toBe("NAV");
-
-        // header
-        element = wrapper.childNodes[1];
-        expect(element.childNodes.length).toBe(1);
-        expect(element.nodeName).toBe("HEADER");
-
-        // aside
-        element = wrapper.childNodes[2];
-        expect(element.childNodes.length).toBe(1);
-        expect(element.nodeName).toBe("ASIDE");
-
-        // article
-        element = wrapper.childNodes[3];
-        expect(element.childNodes.length).toBe(4);
-        expect(element.nodeName).toBe("ARTICLE");
-
-      });
-    });
-
     describe("Each DOM node associated to a view", function() {
 
       it("has its correct data-cid attribute", function() {
         // nav
-        element = wrapper.childNodes[0];
+        element = firstTag(wrapper, "nav");
         expect(element.getAttribute("data-cid").indexOf(menuView.cid)).not.toBe(-1);
-
         // header
-        element = wrapper.childNodes[1];
+        element = firstTag(wrapper, "header");
         expect(element.getAttribute("data-cid").indexOf(headerView.cid)).not.toBe(-1);
 
         // aside
-        element = wrapper.childNodes[2];
+        element = firstTag(wrapper, "aside");
         expect(element.getAttribute("data-cid").indexOf(asideView.cid)).not.toBe(-1);
 
         // article
-        element = wrapper.childNodes[3].childNodes;
+        element = firstTag(wrapper, "article");
+        element = element.children;
         var arr = [baseViewOne, baseViewTwo, baseViewThree, baseViewFour];
         for(var i = 0, l = element.length; i<l; i++) {
           expect(element[i].getAttribute("data-cid")).toBe(arr[i].cid);
@@ -144,13 +159,14 @@ $(function(){
       });
 
       it("updates its old data-cid attribute", function() {
-        var oldCID = wrapper.childNodes[2].getAttribute("data-cid");
+        var oldCID = firstTag(wrapper, "aside").getAttribute("data-cid");
         element = appendElement('aside');
         element.appendChild(document.createTextNode("This is the new aside"));
         asideView.setElement(wrapper.appendChild(element));
 
-        expect(wrapper.childNodes[2].getAttribute("data-cid")).toBe("");
-        expect(wrapper.childNodes[4].getAttribute("data-cid")).toBe(oldCID);
+        var asides = wrapper.getElementsByTagName("aside");
+        expect(asides[0].getAttribute("data-cid")).toBe("");
+        expect(asides[1].getAttribute("data-cid")).toBe(oldCID);
       });
     });
 
@@ -241,7 +257,7 @@ $(function(){
 
     describe("Events are triggered on multi-node to one dom", function() {
       var navHandler  = jasmine.createSpy('navHandler'),
-          bubble      = new BubbleEvent("navigationEvent");
+        bubble      = new BubbleEvent("navigationEvent");
 
       menuView.on("navigationEvent", navHandler);
       navView.on("navigationEvent", navHandler);
