@@ -28,6 +28,7 @@
     "grunt-template-jasmine-templates": "~0.0.0-c"
   },
   "scripts": {
+    "install": "node bower.js",
     "test": "grunt travis"
   },
   "repository": {

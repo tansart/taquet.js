@@ -41,7 +41,20 @@ function copyBackboneTestFiles() {
   },
   indexfile = grunt.template.process((fs.readFileSync('./src/out/backbone-test.tmpl').toString()), {data: paths});
 
+  var uglyPaths = {
+    pathToTaquet: '"'+path.relative(testRoot, rootPath+'/taquet.min.js')+'"',
+    pathToBackbone: '"'+path.relative(testRoot, rootPath+'/src/vendor/backbone.js')+'"'
+  },
+  uglyIndexfile = grunt.template.process((fs.readFileSync('./src/out/backbone-test.tmpl').toString()), {data: uglyPaths});
+
   fs.writeFile(testRoot+"index.html", indexfile, function(err) {
+    if(err) {
+      throw err;
+    }
+  });
+
+  // Now, let's create a file for the minified version
+  fs.writeFile(testRoot+"index.min.html", indexfile, function(err) {
     if(err) {
       throw err;
     }

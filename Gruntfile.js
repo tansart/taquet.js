@@ -3,7 +3,7 @@ module.exports = function(grunt) {
   var fs = require('fs'),
     mOutput = 'taquet.js',
     mFiles = [
-      'src/com/stilva/util/Queue.js',
+//      'src/com/stilva/util/Queue.js',
       'src/com/stilva/taquet/util/TaquetCore.js',
       'src/com/stilva/taquet/history/History.js',
       'src/com/stilva/taquet/event/BubbleEventManager.js',
@@ -19,6 +19,7 @@ module.exports = function(grunt) {
     ];
 
   grunt.initConfig({
+
     pkg: grunt.file.readJSON('package.json'),
 
     connect: {
@@ -41,6 +42,26 @@ module.exports = function(grunt) {
       dist: {
         src: mFiles,
         dest: mOutput
+      }
+    },
+
+    uglify: {
+      options: {
+
+        banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */',
+
+        mangle: {
+          except: ['Taquet', 'Backbone']
+        },
+
+        sourceMap: 'taquet.map.js'
+
+      },
+
+      dist: {
+        files: {
+          'taquet.min.js': ['taquet.js']
+        }
       }
     },
 
@@ -68,10 +89,21 @@ module.exports = function(grunt) {
           host: 'http://127.0.0.1:<%= connect.test.port %>/',
           template: require('grunt-template-jasmine-templates'),
           templateOptions: {
-            vendor: ["src/vendor/lodash.js"],
+//            vendor: ["src/vendor/lodash.js"],
             template: 'test/com/stilva/**/*.tmpl'
           }
         }
+      },
+
+      pub: {
+        src: [
+          './src/vendor/lodash.js',
+          './src/vendor/jquery.js',
+          './src/vendor/backbone.js',
+          './src/com/stilva/taquet/event/BubbleEvent.js',
+          './taquet.min.js'
+        ],
+        options: '<%= jasmine.taquet.options %>'
       }
     },
 
@@ -80,6 +112,14 @@ module.exports = function(grunt) {
         options: {
           urls: [
             'http://127.0.0.1:<%= connect.test.port %>/test/com/backbone/index.html'
+          ]
+        }
+      },
+
+      pub: {
+        options: {
+          urls: [
+            'http://127.0.0.1:<%= connect.test.port %>/test/com/backbone/index.min.html'
           ]
         }
       }
@@ -92,17 +132,13 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      scripts: {
-        files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
-        tasks: ['compile', 'connect', 'jasmine']
-      },
-      testAll: {
+      test: {
         files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
         tasks: ['compile', 'connect', 'qunit', 'jasmine']
       },
       compile: {
         files: ['src/**/*.js', 'src/out/*.tmpl', 'test/**/*Spec.js'],
-        tasks: ['compile']
+        tasks: ['compile', 'connect', 'jasmine']
       }
     }
 
@@ -117,16 +153,20 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-benchmark');
 
-  // Default task(s).
+  // Default task(s). Watch -> Compile, JSHint, Jasmine
   grunt.registerTask('default', ['watch:compile']);
-//  grunt.registerTask('default', ['concat', 'jshint']);
+
+  // Tests Backbonejs too
+  grunt.registerTask('test', ['watch:test']);
+
+  // Get the code ready for publishing
+  grunt.registerTask('pub', ['compile', 'uglify', 'connect', 'qunit:pub', 'jasmine:pub']);
 
   grunt.registerTask('compile', ['concat', 'jshint']);
-//  grunt.registerTask('test', ['compile', 'connect', 'qunit', 'jasmine']);
-  grunt.registerTask('test', ['watch:scripts']);
-  grunt.registerTask('testAll', ['watch:testAll']);
   grunt.registerTask('specs', ['compile', 'connect', 'jasmine']);
   grunt.registerTask('bench', ['benchmark']);
-  grunt.registerTask('travis', ['compile', 'connect', 'qunit', 'jasmine']);
+
+  // CI-Travis
+  grunt.registerTask('travis', ['compile', 'connect', 'qunit:all', 'jasmine:taquet', 'qunit:pub', 'jasmine:pub']);
 
 };
